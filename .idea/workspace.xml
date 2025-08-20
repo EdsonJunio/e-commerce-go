@@ -5,9 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5e22d268-0c01-443b-9750-f4778b64c26d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitattributes" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/requests.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/.gitkeep" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/api/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/api/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/product/delivery/http/product_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/product/delivery/http/product_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/product/domain/product.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/product/domain/product.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/product/wire.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/product/wire.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/shared/config/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/shared/config/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/shared/database/database.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/shared/database/database.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +49,9 @@
     </option>
     <option name="useGoPathFromSystemEnvironment" value="false" />
   </component>
+  <component name="HttpClientEndpointsTabState">
+    <option name="cachedRequestData" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;6b9ccd25bf6ca0b009654aa7a88da22b6edca4cd&quot; value=&quot;###&amp;#10;GET /api/v1/products/1&quot; /&gt;&#10;  &lt;entry key=&quot;97417ff7631505edef82b3053ee9a5de11386350&quot; value=&quot;###&amp;#10;GET http://localhost:8080/api/v1/products/1&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
+  </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -56,7 +69,20 @@
   "keyToString": {
     "DefaultGoTemplateProperty": "Go File",
     "Docker.Dockerfile.executor": "Run",
+    "Docker.docker-compose.yml.db: Compose Deployment.executor": "Run",
     "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    "Go Build.go build main.go.executor": "Debug",
+    "HTTP Request.All in e_commerce_go-endpoints.executor": "Run",
+    "HTTP Request.e_commerce_go-endpoints | #1.executor": "Run",
+    "HTTP Request.e_commerce_go-endpoints_1 | #1.executor": "Run",
+    "HTTP Request.e_commerce_go-endpoints_2 | #1.executor": "Run",
+    "HTTP Request.e_commerce_go-endpoints_3 | #1.executor": "Run",
+    "HTTP Request.requests | Create a new product.executor": "Run",
+    "HTTP Request.requests | Get product by ID.executor": "Run",
+    "HTTP Request.requests | Get product by slug.executor": "Run",
+    "HTTP Request.requests | Health check.executor": "Run",
+    "HTTP Request.requests | List all products (with pagination).executor": "Run",
+    "HTTP Request.requests | Update a product (partial update).executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
@@ -66,24 +92,63 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "<unknown>",
+    "git-widget-placeholder": "ecom-01",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "C:/Users/edson.ribeiro_onfly",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "configurable.group.appearance",
+    "settings.editor.selected.configurable": "go",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
+    ]
   }
 }]]></component>
-  <component name="RunManager" selected="Docker.Dockerfile">
-    <configuration name="Dockerfile" type="docker-deploy" factoryName="dockerfile" temporary="true" server-name="Docker">
-      <deployment type="dockerfile">
-        <settings>
-          <option name="sourceFilePath" value="Dockerfile" />
-        </settings>
-      </deployment>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="\\wsl.localhost\Ubuntu\home\edsonjr\golang\e-commerce-go\docs" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationStatuses">
+      <map>
+        <entry key="HttpClient.HttpRequestRunConfigurationType">
+          <value>
+            <map>
+              <entry key="requests | Create a new product" value="STOPPED" />
+              <entry key="requests | Get product by slug" value="STOPPED" />
+              <entry key="requests | List all products (with pagination)" value="STOPPED" />
+              <entry key="requests | Update a product (partial update)" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager" selected="HTTP Request.requests | List all products (with pagination)">
+    <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="e-commerce-go" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <package value="e-commerce-go" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/cmd/api/main.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="requests | Create a new product" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/docs/requests.http" executionIdentifier="Create a new product" index="4" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="requests | Get product by slug" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/docs/requests.http" executionIdentifier="Get product by slug" index="3" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="requests | List all products (with pagination)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/docs/requests.http" executionIdentifier="List all products (with pagination)" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="requests | Update a product (partial update)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/docs/requests.http" executionIdentifier="Update a product (partial update)" index="5" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
@@ -98,18 +163,13 @@
       </deployment>
       <method v="2" />
     </configuration>
-    <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
-      <deployment type="docker-compose.yml">
-        <settings>
-          <option name="sourceFilePath" value="docker-compose.yml" />
-        </settings>
-      </deployment>
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Docker.Dockerfile" />
-        <item itemvalue="Docker.docker-compose.yml: Compose Deployment" />
+        <item itemvalue="HTTP Request.requests | List all products (with pagination)" />
+        <item itemvalue="Go Build.go build main.go" />
+        <item itemvalue="HTTP Request.requests | Update a product (partial update)" />
+        <item itemvalue="HTTP Request.requests | Get product by slug" />
+        <item itemvalue="HTTP Request.requests | Create a new product" />
       </list>
     </recent_temporary>
   </component>
@@ -156,6 +216,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

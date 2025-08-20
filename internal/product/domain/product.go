@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// Product representa um produto no sistema
 type Product struct {
 	ID         int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	CategoryID int        `gorm:"column:category_id;not null" json:"category_id"`

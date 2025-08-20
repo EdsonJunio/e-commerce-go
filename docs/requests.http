@@ -1,0 +1,45 @@
+# Base URL
+@baseUrl = http://localhost:8080/api/v1
+
+### List all products (with pagination)
+# Optional query params: page, limit, category_id, is_active
+GET {{baseUrl}}/products?page=1&limit=10
+Content-Type: application/json
+
+### Get product by ID
+GET {{baseUrl}}/products/1
+Content-Type: application/json
+
+### Get product by slug
+GET {{baseUrl}}/products/slug/new-product
+Content-Type: application/json
+
+### Create a new product
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "category_id": 1,
+  "name": "New Product",
+  "slug": "new-product",
+  "price_cents": 1999,
+  "is_active": true
+}
+
+### Update a product (partial update)
+PUT {{baseUrl}}/products/1
+Content-Type: application/json
+
+{
+  "name": "Updated Product Name",
+  "price_cents": 2499,
+  "is_active": false
+}
+
+### Delete a product
+DELETE {{baseUrl}}/products/1
+Content-Type: application/json
+
+### Health check
+GET http://localhost:8080/health
+Content-Type: application/json

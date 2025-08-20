@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:13
+    image: postgres:13-alpine
     container_name: ecommerce_db
     environment:
       POSTGRES_USER: postgres
@@ -15,8 +15,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
-      timeout: 3s
-      retries: 5
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   api:
     build: .

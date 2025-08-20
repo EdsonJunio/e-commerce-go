@@ -1,12 +1,10 @@
-// +build wireinject
-
 package product
 
 import (
 	"e-commerce-go/internal/product/delivery/http"
-	"e-commerce-go/internal/product/domain"
 	"e-commerce-go/internal/product/repository"
 	"e-commerce-go/internal/product/service"
+
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
