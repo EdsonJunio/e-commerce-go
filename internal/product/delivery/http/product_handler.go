@@ -38,7 +38,7 @@ func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 type createProductRequest struct {
 	CategoryID int    `json:"category_id" binding:"required,min=1"`
 	Name       string `json:"name" binding:"required,min=3,max=255"`
-	Slug       string `json:"slug" binding:"required,min=3,max=255,slug"`
+	Slug       string `json:"slug" binding:"required,min=3,max=255"`
 	PriceCents int64  `json:"price_cents" binding:"required,min=1"`
 	IsActive   bool   `json:"is_active"`
 }
