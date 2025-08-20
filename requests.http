@@ -20,8 +20,8 @@ Content-Type: application/json
 
 {
   "category_id": 1,
-  "name": "New Product",
-  "slug": "new-product",
+  "name": "New Product5",
+  "slug": "new-product5",
   "price_cents": 1999,
   "is_active": true
 }
@@ -32,12 +32,12 @@ Content-Type: application/json
 
 {
   "name": "Updated Product Name",
-  "price_cents": 2499,
+  "price_cents": 24993,
   "is_active": false
 }
 
 ### Delete a product
-DELETE {{baseUrl}}/products/1
+DELETE {{baseUrl}}/products/3
 Content-Type: application/json
 
 ### Health check

@@ -14,6 +14,14 @@ type ProductHandler struct {
 	service domain.Service
 }
 
+type createProductRequest struct {
+	CategoryID int    `json:"category_id" binding:"required,min=1"`
+	Name       string `json:"name" binding:"required,min=3,max=255"`
+	Slug       string `json:"slug" binding:"required,min=3,max=255"`
+	PriceCents int64  `json:"price_cents" binding:"required,min=1"`
+	IsActive   bool   `json:"is_active"`
+}
+
 // NewProductHandler cria uma nova instância do manipulador HTTP de produtos
 func NewProductHandler(service domain.Service) *ProductHandler {
 	return &ProductHandler{service: service}
@@ -35,26 +43,7 @@ func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 	}
 }
 
-type createProductRequest struct {
-	CategoryID int    `json:"category_id" binding:"required,min=1"`
-	Name       string `json:"name" binding:"required,min=3,max=255"`
-	Slug       string `json:"slug" binding:"required,min=3,max=255"`
-	PriceCents int64  `json:"price_cents" binding:"required,min=1"`
-	IsActive   bool   `json:"is_active"`
-}
-
 // CreateProduct cria um novo produto
-// @Summary Cria um novo produto
-// @Description Cria um novo produto no sistema
-// @Tags products
-// @Accept json
-// @Produce json
-// @Param product body createProductRequest true "Dados do produto"
-// @Success 201 {object} domain.Product
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 409 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products [post]
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	var req createProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -87,16 +76,6 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 }
 
 // GetProduct obtém um produto por ID
-// @Summary Obtém um produto por ID
-// @Description Retorna os detalhes de um produto específico
-// @Tags products
-// @Produce json
-// @Param id path int true "ID do Produto"
-// @Success 200 {object} domain.Product
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 404 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products/{id} [get]
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -118,16 +97,6 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 }
 
 // GetProductBySlug obtém um produto por slug
-// @Summary Obtém um produto por slug
-// @Description Retorna os detalhes de um produto específico usando seu slug
-// @Tags products
-// @Produce json
-// @Param slug path string true "Slug do Produto"
-// @Success 200 {object} domain.Product
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 404 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products/slug/{slug} [get]
 func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 	if slug == "" {
@@ -157,19 +126,6 @@ type updateProductRequest struct {
 }
 
 // UpdateProduct atualiza um produto existente
-// @Summary Atualiza um produto existente
-// @Description Atualiza os dados de um produto existente
-// @Tags products
-// @Accept json
-// @Produce json
-// @Param id path int true "ID do Produto"
-// @Param product body updateProductRequest true "Dados do produto para atualização"
-// @Success 200 {object} domain.Product
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 404 {object} response.ErrorResponse
-// @Failure 409 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products/{id} [put]
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -231,16 +187,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 }
 
 // DeleteProduct remove um produto
-// @Summary Remove um produto
-// @Description Remove um produto do sistema (soft delete)
-// @Tags products
-// @Produce json
-// @Param id path int true "ID do Produto"
-// @Success 204
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 404 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products/{id} [delete]
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -261,18 +207,6 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 }
 
 // ListProducts lista produtos com paginação e filtros
-// @Summary Lista produtos
-// @Description Retorna uma lista paginada de produtos com opção de filtros
-// @Tags products
-// @Produce json
-// @Param page query int false "Número da página" default(1)
-// @Param limit query int false "Limite de itens por página" default(10)
-// @Param category_id query int false "Filtrar por ID da categoria"
-// @Param is_active query boolean false "Filtrar por status ativo"
-// @Success 200 {object} response.PaginatedResponse{data=[]domain.Product}
-// @Failure 400 {object} response.ErrorResponse
-// @Failure 500 {object} response.ErrorResponse
-// @Router /products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	// Parâmetros de paginação
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
