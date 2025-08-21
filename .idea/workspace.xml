@@ -4,13 +4,12 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5e22d268-0c01-443b-9750-f4778b64c26d" name="Changes" comment="">
+    <list default="true" id="5e22d268-0c01-443b-9750-f4778b64c26d" name="Changes" comment="feat: Config test commit">
+      <change afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/hooks/pre-commit.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/setup-pre-commit.ps1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/requests.http" beforeDir="false" afterPath="$PROJECT_DIR$/requests.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/product/delivery/http/product_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/product/delivery/http/product_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/openapi.yaml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,57 +57,57 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
-    "Docker.Dockerfile.executor": "Run",
-    "Docker.docker-compose.yml.db: Compose Deployment.executor": "Run",
-    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
-    "Go Build.go build main.go.executor": "Debug",
-    "Go Test.TestProductHandler_CreateProduct in e-commerce-go/internal/product/delivery/http.executor": "Run",
-    "Go Test.TestProductHandler_GetProduct in e-commerce-go/internal/product/delivery/http.executor": "Run",
-    "Go Test.TestProductHandler_GetProduct/product_found in e-commerce-go/internal/product/delivery/http.executor": "Run",
-    "Go Test.TestProductService_CreateProduct in e-commerce-go/internal/product/service.executor": "Run",
-    "Go Test.go test e-commerce-go/internal/product/delivery/http.executor": "Run",
-    "Go Test.go test e-commerce-go/internal/product/service.executor": "Run",
-    "HTTP Request.All in e_commerce_go-endpoints.executor": "Run",
-    "HTTP Request.e_commerce_go-endpoints | #1.executor": "Run",
-    "HTTP Request.e_commerce_go-endpoints_1 | #1.executor": "Run",
-    "HTTP Request.e_commerce_go-endpoints_2 | #1.executor": "Run",
-    "HTTP Request.e_commerce_go-endpoints_3 | #1.executor": "Run",
-    "HTTP Request.requests | Create a new product.executor": "Run",
-    "HTTP Request.requests | Delete a product.executor": "Run",
-    "HTTP Request.requests | Get product by ID.executor": "Run",
-    "HTTP Request.requests | Get product by slug.executor": "Run",
-    "HTTP Request.requests | Health check.executor": "Run",
-    "HTTP Request.requests | List all products (with pagination) (1).executor": "Run",
-    "HTTP Request.requests | List all products (with pagination).executor": "Run",
-    "HTTP Request.requests | Update a product (partial update).executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.GoLinterPluginOnboarding": "true",
-    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "ecom-02",
-    "go.import.settings.migrated": "true",
-    "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "C:/Users/edson.ribeiro_onfly",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "go",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;Docker.Dockerfile.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yml.db: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yml: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Go Build.go build main.go.executor&quot;: &quot;Debug&quot;,
+    &quot;Go Test.TestProductHandler_CreateProduct in e-commerce-go/internal/product/delivery/http.executor&quot;: &quot;Run&quot;,
+    &quot;Go Test.TestProductHandler_GetProduct in e-commerce-go/internal/product/delivery/http.executor&quot;: &quot;Run&quot;,
+    &quot;Go Test.TestProductHandler_GetProduct/product_found in e-commerce-go/internal/product/delivery/http.executor&quot;: &quot;Run&quot;,
+    &quot;Go Test.TestProductService_CreateProduct in e-commerce-go/internal/product/service.executor&quot;: &quot;Run&quot;,
+    &quot;Go Test.go test e-commerce-go/internal/product/delivery/http.executor&quot;: &quot;Run&quot;,
+    &quot;Go Test.go test e-commerce-go/internal/product/service.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.All in e_commerce_go-endpoints.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.e_commerce_go-endpoints | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.e_commerce_go-endpoints_1 | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.e_commerce_go-endpoints_2 | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.e_commerce_go-endpoints_3 | #1.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Create a new product.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Delete a product.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Get product by ID.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Get product by slug.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Health check.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | List all products (with pagination) (1).executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | List all products (with pagination).executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.requests | Update a product (partial update).executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginOnboarding&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ecom-02&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/edson.ribeiro_onfly&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;go&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="\\wsl.localhost\Ubuntu\home\edsonjr\golang\e-commerce-go" />
@@ -121,19 +120,36 @@
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="requests | Create a new product" value="STOPPED" />
               <entry key="requests | Delete a product" value="STOPPED" />
               <entry key="requests | Health check" value="STOPPED" />
               <entry key="requests | List all products (with pagination)" value="STOPPED" />
-              <entry key="requests | Update a product (partial update)" value="STOPPED" />
             </map>
           </value>
         </entry>
       </map>
     </option>
   </component>
-  <component name="RunManager" selected="HTTP Request.requests | Health check">
-    <configuration name="requests | Create a new product" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/requests.http" executionIdentifier="Create a new product" index="4" runType="Run single request">
+  <component name="RunManager" selected="Go Test.go test e-commerce-go/internal/product/delivery/http">
+    <configuration name="go test e-commerce-go/internal/product/delivery/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="e-commerce-go" />
+      <working_directory value="$PROJECT_DIR$/internal/product/delivery/http" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="e-commerce-go/internal/product/delivery/http" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go test e-commerce-go/internal/product/service" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="e-commerce-go" />
+      <working_directory value="$PROJECT_DIR$/internal/product/service" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="e-commerce-go/internal/product/service" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <configuration name="requests | Delete a product" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/requests.http" executionIdentifier="Delete a product" index="6" runType="Run single request">
@@ -143,9 +159,6 @@
       <method v="2" />
     </configuration>
     <configuration name="requests | List all products (with pagination)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/requests.http" executionIdentifier="List all products (with pagination)" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="requests | Update a product (partial update)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/requests.http" executionIdentifier="Update a product (partial update)" index="5" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
@@ -162,11 +175,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.go test e-commerce-go/internal/product/delivery/http" />
+        <item itemvalue="Go Test.go test e-commerce-go/internal/product/service" />
         <item itemvalue="HTTP Request.requests | Health check" />
         <item itemvalue="HTTP Request.requests | List all products (with pagination)" />
         <item itemvalue="HTTP Request.requests | Delete a product" />
-        <item itemvalue="HTTP Request.requests | Update a product (partial update)" />
-        <item itemvalue="HTTP Request.requests | Create a new product" />
       </list>
     </recent_temporary>
   </component>
@@ -216,7 +229,9 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Initial commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="" />
+    <MESSAGE value="feat: create teste products" />
+    <MESSAGE value="feat: Config test commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Config test commit" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
