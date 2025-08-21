@@ -139,7 +139,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// Busca o produto existente
 	existing, err := h.service.GetProductByID(id)
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -150,7 +149,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// Aplica as atualizações apenas nos campos fornecidos
 	if req.CategoryID != nil {
 		existing.CategoryID = *req.CategoryID
 	}
@@ -181,7 +179,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// Busca o produto atualizado para retornar
 	updatedProduct, _ := h.service.GetProductByID(id)
 	c.JSON(http.StatusOK, updatedProduct)
 }
@@ -208,7 +205,6 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 
 // ListProducts lista produtos com paginação e filtros
 func (h *ProductHandler) ListProducts(c *gin.Context) {
-	// Parâmetros de paginação
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page <= 0 {
 		page = 1
@@ -219,7 +215,6 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		limit = 10
 	}
 
-	// Filtros
 	filters := make(map[string]interface{})
 	if categoryID := c.Query("category_id"); categoryID != "" {
 		if catID, err := strconv.Atoi(categoryID); err == nil {
@@ -233,14 +228,12 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		}
 	}
 
-	// Busca os produtos
 	products, total, err := h.service.ListProducts(limit, page, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "Erro ao listar produtos"))
 		return
 	}
 
-	// Cria a resposta paginada
 	c.JSON(http.StatusOK, response.NewPaginatedResponse(
 		products,
 		total,
