@@ -1,0 +1,12 @@
+{
+  "name": "e-commerce-go",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "test": "go test -v -cover ./..."
+  },
+  "devDependencies": {
+    "husky": "^8.0.0"
+  }
+}
