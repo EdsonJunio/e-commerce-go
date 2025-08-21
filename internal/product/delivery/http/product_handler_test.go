@@ -143,14 +143,12 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			if tt.isError {
 				expected := tt.expectedBody.(response.ErrorResponse)
 				assert.Equal(t, expected.Code, responseBody["code"])
-				// For validation errors, check if the message contains all required fields
 				message := responseBody["message"].(string)
 				assert.Contains(t, message, "CategoryID")
 				assert.Contains(t, message, "Name")
 				assert.Contains(t, message, "PriceCents")
 				assert.Contains(t, message, "Slug")
 			} else {
-				// For success responses, check each field individually
 				expected := make(map[string]interface{})
 				switch v := tt.expectedBody.(type) {
 				case map[string]interface{}:
@@ -163,7 +161,6 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 					t.Fatalf("unexpected type: %T", tt.expectedBody)
 				}
 
-				// Check each expected field
 				for key, expectedValue := range expected {
 					assert.Equal(t, expectedValue, responseBody[key], "mismatch in field: %s", key)
 				}
@@ -250,7 +247,6 @@ func TestProductHandler_GetProduct(t *testing.T) {
 				assert.Equal(t, expected.Code, responseBody["code"])
 				assert.Equal(t, expected.Message, responseBody["message"])
 			case map[string]interface{}:
-				// Remove timestamps for comparison
 				delete(responseBody, "created_at")
 				delete(responseBody, "updated_at")
 				delete(expected, "created_at")

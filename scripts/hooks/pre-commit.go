@@ -11,7 +11,6 @@ import (
 func main() {
 	fmt.Println("🚀 Executando testes antes do commit...")
 
-	// Executa os testes do Go
 	cmd := exec.Command("go", "test", "-v", "-cover", "./...")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"errors"
-	"gorm.io/gorm"
 	"e-commerce-go/internal/product/domain"
+	"errors"
+
+	"gorm.io/gorm"
 )
 
 type productRepository struct {
@@ -51,17 +52,14 @@ func (r *productRepository) List(limit, offset int, filters map[string]interface
 
 	tx := r.db.Model(&domain.Product{})
 
-	// Aplicar filtros
 	for key, value := range filters {
 		tx = tx.Where(key, value)
 	}
 
-	// Contar o total de registros com os filtros aplicados
 	if err := tx.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Aplicar paginação e buscar resultados
 	err := tx.Offset(offset).Limit(limit).Find(&products).Error
 	if err != nil {
 		return nil, 0, err

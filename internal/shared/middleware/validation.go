@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"e-commerce-go/internal/shared/response"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -13,7 +14,6 @@ import (
 // RegisterCustomValidations registra validações personalizadas
 func RegisterCustomValidations() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		// Validador de slug (letras minúsculas, números e hífens)
 		_ = v.RegisterValidation("slug", func(fl validator.FieldLevel) bool {
 			matched, _ := regexp.MatchString(`^[a-z0-9]+(?:-[a-z0-9]+)*$`, fl.Field().String())
 			return matched

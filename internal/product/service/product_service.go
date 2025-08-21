@@ -1,8 +1,8 @@
 package service
 
 import (
-	"errors"
 	"e-commerce-go/internal/product/domain"
+	"errors"
 )
 
 type productService struct {
@@ -15,7 +15,6 @@ func NewProductService(repo domain.Repository) domain.Service {
 }
 
 func (s *productService) CreateProduct(product *domain.Product) error {
-	// Validações básicas
 	if product.Name == "" {
 		return errors.New("product name is required")
 	}
@@ -26,7 +25,6 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 		return errors.New("product price must be greater than zero")
 	}
 
-	// Verifica se já existe um produto com o mesmo slug
 	existing, _ := s.repo.FindBySlug(product.Slug)
 	if existing != nil {
 		return errors.New("product with this slug already exists")
@@ -83,7 +81,6 @@ func (s *productService) UpdateProduct(id int, product *domain.Product) error {
 		return errors.New("product not found")
 	}
 
-	// Atualiza apenas os campos permitidos
 	existing.Name = product.Name
 	existing.Slug = product.Slug
 	existing.PriceCents = product.PriceCents
@@ -98,7 +95,6 @@ func (s *productService) DeleteProduct(id int) error {
 		return errors.New("invalid product ID")
 	}
 
-	// Verifica se o produto existe
 	existing, err := s.repo.FindByID(id)
 	if err != nil {
 		return err
