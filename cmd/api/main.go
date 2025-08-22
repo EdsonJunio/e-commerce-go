@@ -14,17 +14,28 @@ import (
 	"e-commerce-go/internal/shared/config"
 	"e-commerce-go/internal/shared/database"
 	"e-commerce-go/internal/shared/middleware"
+	"e-commerce-go/pkg/logger"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {
 	// Carrega as configurações
 	cfg := config.Load()
 
-	// Configura o logger
+	if err := logger.Init(logger.Config{
+		Environment: cfg.Environment,
+		Service:     cfg.AppName,
+		Version:     cfg.Version,
+	}); err != nil {
+		log.Fatalf("Erro ao inicializar o logger: %v", err)
+	}
+	defer logger.Sync()
+
+	// Configura o logger do Gin
 	if os.Getenv("GIN_MODE") != "release" {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -34,7 +45,7 @@ func main() {
 	// Inicializa a conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		log.Fatalf("Falha ao conectar ao banco de dados: %v", err)
+		logger.L().Fatal("Falha ao conectar ao banco de dados", zap.Error(err))
 	}
 
 	// Cria uma nova instância do Gin
@@ -43,6 +54,10 @@ func main() {
 	// Middlewares globais
 	r.Use(gin.Recovery())
 	r.Use(requestid.New())
+
+	r.Use(logger.GinLoggerMiddleware())
+
+	r.Use(logger.RecoveryWithLogger())
 
 	// Configuração do CORS
 	corsCfg := cors.Config{
@@ -85,7 +100,7 @@ func main() {
 
 	// Inicia o servidor em uma goroutine
 	go func() {
-		log.Printf("Servidor iniciado na porta %s", cfg.Server.Port)
+		logger.L().Info("Servidor iniciado", zap.String("port", cfg.Server.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 
@@ -96,10 +111,12 @@ func main() {
 	// Aguarda por um sinal de erro ou de desligamento
 	select {
 	case err := <-serverErrors:
-		log.Fatalf("Erro ao iniciar o servidor: %v", err)
+		logger.L().Fatal("Erro ao iniciar o servidor", zap.Error(err))
 
 	case sig := <-osSignals:
-		log.Printf("Sinal %v recebido, iniciando desligamento gracioso...", sig)
+		logger.L().Info("Sinal recebido, iniciando desligamento gracioso...",
+			zap.String("signal", sig.String()),
+		)
 
 		// Cria um contexto com timeout para o desligamento
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
@@ -107,9 +124,9 @@ func main() {
 
 		// Tenta desligar o servidor graciosamente
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatalf("Erro ao desligar o servidor: %v", err)
+			logger.L().Fatal("Erro ao desligar o servidor", zap.Error(err))
 		}
 
-		log.Println("Servidor desligado com sucesso")
+		logger.L().Info("Servidor desligado com sucesso")
 	}
 }

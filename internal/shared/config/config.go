@@ -9,9 +9,12 @@ import (
 
 // Config contém todas as configurações da aplicação
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	CORS     CORSConfig
+	AppName     string
+	Version     string
+	Environment string
+	Server      ServerConfig
+	Database    DatabaseConfig
+	CORS        CORSConfig
 }
 
 // ServerConfig contém as configurações do servidor HTTP
@@ -46,9 +49,82 @@ type CORSConfig struct {
 	MaxAge           time.Duration
 }
 
+// getEnvString gets an environment variable as a string with a default value
+func getEnvString(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvInt gets an environment variable as an integer with a default value
+func getEnvInt(key string, defaultValue int) int {
+	if value, exists := os.LookupEnv(key); exists {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
+	}
+	return defaultValue
+}
+
+// getEnvDuration gets an environment variable as a time.Duration with a default value
+func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+
+	duration, err := time.ParseDuration(value)
+	if err != nil {
+		return defaultValue
+	}
+
+	return duration
+}
+
+// getEnvStringSlice gets an environment variable as a string slice with a default value
+// The environment variable should be a comma-separated list of values
+func getEnvStringSlice(key string, defaultValue []string) []string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+
+	if value == "" {
+		return []string{}
+	}
+
+	// Split by comma and trim spaces
+	values := strings.Split(value, ",")
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+	}
+
+	return values
+}
+
+// getEnvBool gets an environment variable as a boolean with a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+
+	boolValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue
+	}
+
+	return boolValue
+}
+
 // Load carrega as configurações da aplicação a partir de variáveis de ambiente
 func Load() *Config {
 	return &Config{
+		AppName:     getEnvString("APP_NAME", "e-commerce-go"),
+		Version:     getEnvString("APP_VERSION", "1.0.0"),
+		Environment: getEnvString("APP_ENVIRONMENT", "development"),
+
 		Server: ServerConfig{
 			Port:            getEnvString("SERVER_PORT", "8080"),
 			ReadTimeout:     getEnvDuration("SERVER_READ_TIMEOUT", 15*time.Second),
@@ -76,50 +152,4 @@ func Load() *Config {
 			MaxAge:           getEnvDuration("CORS_MAX_AGE", 12*time.Hour),
 		},
 	}
-}
-
-// getEnvString retorna uma string do ambiente ou um valor padrão
-func getEnvString(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
-}
-
-// getEnvInt retorna um inteiro do ambiente ou um valor padrão
-func getEnvInt(key string, defaultValue int) int {
-	if value, exists := os.LookupEnv(key); exists {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-// getEnvBool retorna um booleano do ambiente ou um valor padrão
-func getEnvBool(key string, defaultValue bool) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
-	}
-	return defaultValue
-}
-
-// getEnvDuration retorna uma duração do ambiente ou um valor padrão
-func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
-	if value, exists := os.LookupEnv(key); exists {
-		if duration, err := time.ParseDuration(value); err == nil {
-			return duration
-		}
-	}
-	return defaultValue
-}
-
-// getEnvStringSlice retorna um slice de strings do ambiente ou um valor padrão
-func getEnvStringSlice(key string, defaultValue []string) []string {
-	if value, exists := os.LookupEnv(key); exists {
-		return strings.Split(value, ",")
-	}
-	return defaultValue
 }
