@@ -1,0 +1,64 @@
+# Binários
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Testes e cobertura
+*.test
+*.out
+coverage.txt
+
+# Dependências
+vendor/
+
+# Variáveis de ambiente
+.env
+
+# Logs
+*.log
+
+# IDE e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Arquivos do sistema operacional
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Air live reload
+.air.toml
+.air.conf
+
+# Arquivos de debug
+debug/
+
+# Node.js (se for usar frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+*~
+
+# Arquivos de build do frontend (se houver)
+/build/
+/dist/
+
+# Arquivos de configuração local
+*.local
