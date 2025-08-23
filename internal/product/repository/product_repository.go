@@ -66,13 +66,13 @@ func (r *productRepository) FindByID(id int) (*domain.Product, error) {
 }
 
 // FindBySlug fetches a product by slug.
-// Returns ErrNotFound if no record exists.
+// Returns (nil, nil) if no record exists.
 func (r *productRepository) FindBySlug(slug string) (*domain.Product, error) {
 	var product domain.Product
 	err := r.db.Where("slug = ?", slug).First(&product).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.L().Info("product not found by slug", zap.String("slug", slug))
-		return nil, domain.ErrNotFound
+		return nil, nil
 	}
 	if err != nil {
 		logger.L().Error(
