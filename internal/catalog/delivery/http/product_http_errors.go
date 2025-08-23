@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"e-commerce-go/internal/product/domain"
+	"e-commerce-go/internal/catalog/domain"
 )
 
 // ProductHTTPCode maps domain errors to HTTP status codes and response codes.

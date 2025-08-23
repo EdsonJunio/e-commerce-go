@@ -3,7 +3,7 @@ package service
 import (
 	"errors"
 
-	"e-commerce-go/internal/product/domain"
+	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/pkg/logger"
 
 	"go.uber.org/zap"
@@ -18,40 +18,25 @@ func NewProductService(repo domain.Repository) domain.Service {
 	return &productService{repo: repo}
 }
 
-// CreateProduct validates and persists a new product.
-func (s *productService) CreateProduct(product *domain.Product) error {
-	if product.Name == "" {
-		logger.L().Warn("missing product name in CreateProduct")
-		return domain.ErrNameReq
+// ListProducts returns a paginated list of products with optional filters.
+func (s *productService) ListProducts(limit, page int, filters map[string]interface{}) ([]domain.Product, int64, error) {
+	if limit <= 0 {
+		limit = 10
 	}
-	if product.Slug == "" {
-		logger.L().Warn("missing product slug in CreateProduct")
-		return domain.ErrSlugReq
+	if page <= 0 {
+		page = 1
 	}
-	if product.PriceCents <= 0 {
-		logger.L().Warn(
-			"invalid product price in CreateProduct",
-			zap.Int64("price_cents", product.PriceCents),
-		)
-		return domain.ErrPriceInvalid
-	}
+	offset := (page - 1) * limit
 
-	existing, err := s.repo.FindBySlug(product.Slug)
-	if err != nil {
-		logger.L().Error(
-			"failed to fetch product by slug",
-			zap.String("slug", product.Slug),
-			zap.Error(err),
-		)
-		return err
-	}
-	if existing != nil {
-		logger.L().Warn("duplicate product slug", zap.String("slug", product.Slug))
-		return domain.ErrSlugExists
-	}
+	logger.L().Info(
+		"listing products",
+		zap.Int("limit", limit),
+		zap.Int("page", page),
+		zap.Int("offset", offset),
+		zap.Any("filters", filters),
+	)
 
-	logger.L().Info("creating new product", zap.String("slug", product.Slug))
-	return s.repo.Create(product)
+	return s.repo.List(limit, offset, filters)
 }
 
 // GetProductByID retrieves a product by ID.
@@ -102,6 +87,42 @@ func (s *productService) GetProductBySlug(slug string) (*domain.Product, error) 
 	}
 
 	return product, nil
+}
+
+// CreateProduct validates and persists a new product.
+func (s *productService) CreateProduct(product *domain.Product) error {
+	if product.Name == "" {
+		logger.L().Warn("missing product name in CreateProduct")
+		return domain.ErrNameReq
+	}
+	if product.Slug == "" {
+		logger.L().Warn("missing product slug in CreateProduct")
+		return domain.ErrSlugReq
+	}
+	if product.PriceCents <= 0 {
+		logger.L().Warn(
+			"invalid product price in CreateProduct",
+			zap.Int64("price_cents", product.PriceCents),
+		)
+		return domain.ErrPriceInvalid
+	}
+
+	existing, err := s.repo.FindBySlug(product.Slug)
+	if err != nil {
+		logger.L().Error(
+			"failed to fetch product by slug",
+			zap.String("slug", product.Slug),
+			zap.Error(err),
+		)
+		return err
+	}
+	if existing != nil {
+		logger.L().Warn("duplicate product slug", zap.String("slug", product.Slug))
+		return domain.ErrSlugExists
+	}
+
+	logger.L().Info("creating new product", zap.String("slug", product.Slug))
+	return s.repo.Create(product)
 }
 
 // UpdateProduct updates an existing product.
@@ -158,27 +179,6 @@ func (s *productService) DeleteProduct(id int) error {
 
 	logger.L().Info("deleting product", zap.Int("id", id))
 	return s.repo.Delete(id)
-}
-
-// ListProducts returns a paginated list of products with optional filters.
-func (s *productService) ListProducts(limit, page int, filters map[string]interface{}) ([]domain.Product, int64, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-	if page <= 0 {
-		page = 1
-	}
-	offset := (page - 1) * limit
-
-	logger.L().Info(
-		"listing products",
-		zap.Int("limit", limit),
-		zap.Int("page", page),
-		zap.Int("offset", offset),
-		zap.Any("filters", filters),
-	)
-
-	return s.repo.List(limit, offset, filters)
 }
 
 var _ = errors.Is

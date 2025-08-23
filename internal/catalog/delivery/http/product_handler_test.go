@@ -2,15 +2,15 @@ package http_test
 
 import (
 	"bytes"
+	producthttp "e-commerce-go/internal/catalog/delivery/http"
 	"encoding/json"
-	
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	producthttp "e-commerce-go/internal/product/delivery/http"
-	"e-commerce-go/internal/product/domain"
+	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/internal/shared/response"
 	"e-commerce-go/pkg/logger"
 

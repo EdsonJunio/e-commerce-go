@@ -1,15 +1,15 @@
-package product
+package catalog
 
 import (
-	"e-commerce-go/internal/product/delivery/http"
-	"e-commerce-go/internal/product/repository"
-	"e-commerce-go/internal/product/service"
+	"e-commerce-go/internal/catalog/delivery/http"
+	"e-commerce-go/internal/catalog/repository"
+	"e-commerce-go/internal/catalog/service"
 
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
 
-// InitializeProductHandler inicializa o handler HTTP de produtos com todas as dependências
+// InitializeProductHandler Initialize Handler HTTP of Products with all dependencies
 func InitializeProductHandler(db *gorm.DB) *http.ProductHandler {
 	wire.Build(
 		repository.NewProductRepository,
