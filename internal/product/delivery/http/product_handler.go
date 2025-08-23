@@ -106,11 +106,11 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		logger.L().Warn(
-			"invalid product ID",
+			"ID de produto inválido",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do produto inválido"))
 		return
 	}
 

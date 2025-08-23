@@ -3,7 +3,7 @@ package http_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -232,7 +232,7 @@ func TestProductHandler_GetProduct(t *testing.T) {
 			name:      "product not found",
 			productID: "999",
 			setupMock: func(ms *mockService) {
-				ms.On("GetProductByID", 999).Return((*domain.Product)(nil), errors.New("product not found"))
+				ms.On("GetProductByID", 999).Return((*domain.Product)(nil), domain.ErrNotFound)
 			},
 			expectedCode: http.StatusNotFound,
 			expectedBody: response.ErrorResponse{

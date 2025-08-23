@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
 	"e-commerce-go/internal/product/domain"
@@ -9,19 +10,20 @@ import (
 // ProductHTTPCode maps domain errors to HTTP status codes and response codes.
 // It ensures transport layer stays decoupled from domain logic.
 func ProductHTTPCode(err error) (string, int) {
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return "", http.StatusOK
 
-	case domain.ErrInvalidID:
+	case errors.Is(err, domain.ErrInvalidID):
 		return "invalid_id", http.StatusBadRequest
-	case domain.ErrNameReq, domain.ErrSlugReq, domain.ErrPriceInvalid, domain.ErrSlugIsReq:
+	case errors.Is(err, domain.ErrNameReq) || errors.Is(err, domain.ErrSlugReq) ||
+		errors.Is(err, domain.ErrPriceInvalid) || errors.Is(err, domain.ErrSlugIsReq):
 		return "invalid_request", http.StatusBadRequest
-	case domain.ErrSlugExists:
+	case errors.Is(err, domain.ErrSlugExists):
 		return "conflict", http.StatusConflict
 
-	case domain.ErrNotFound:
-		return "not_found", http.StatusNotFound
+	case errors.Is(err, domain.ErrNotFound):
+		return "service_error", http.StatusNotFound
 
 	default:
 		return "internal_error", http.StatusInternalServerError
