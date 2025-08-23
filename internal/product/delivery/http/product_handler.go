@@ -33,11 +33,12 @@ type updateProductRequest struct {
 	IsActive   *bool   `json:"is_active,omitempty"`
 }
 
+// NewProductHandler returns a new ProductHandler with the given service.
 func NewProductHandler(service domain.Service) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// RegisterRoutes registra as rotas do produto no roteador do Gin
+// RegisterRoutes registers product endpoints in the Gin router.
 func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
@@ -53,13 +54,14 @@ func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 	}
 }
 
-// CreateProduct cria um novo produto
+// CreateProduct handles POST /products requests.
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
 	var req createProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.L().Warn("Requisição inválida em CreateProduct",
+		logger.L().Warn(
+			"invalid request in CreateProduct",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
@@ -76,25 +78,19 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	if err := h.service.CreateProduct(product); err != nil {
-		status := http.StatusInternalServerError
-		switch {
-		case err.Error() == "product with this slug already exists":
-			status = http.StatusConflict
-		case strings.Contains(err.Error(), "is required"),
-			strings.Contains(err.Error(), "must be greater than zero"):
-			status = http.StatusBadRequest
-		}
-
-		logger.L().Error("Erro ao criar produto",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to create product",
 			zap.Error(err),
 			zap.String("slug", req.Slug),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
-	logger.L().Info("Produto criado com sucesso",
+	logger.L().Info(
+		"product created successfully",
 		zap.Int("product_id", product.ID),
 		zap.String("slug", product.Slug),
 		zap.String("request_id", reqID),
@@ -102,94 +98,95 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, product)
 }
 
-// GetProduct obtém um produto por ID
+// GetProduct handles GET /products/:id requests.
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		logger.L().Warn("ID inválido em GetProduct",
+		logger.L().Warn(
+			"invalid product ID",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do produto inválido"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
 		return
 	}
 
 	product, err := h.service.GetProductByID(id)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if err.Error() == "product not found" {
-			status = http.StatusNotFound
-		}
-		logger.L().Error("Erro ao buscar produto por ID",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to get product by ID",
 			zap.Error(err),
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
-	logger.L().Info("Produto recuperado por ID",
+	logger.L().Info(
+		"product retrieved by ID",
 		zap.Int("id", id),
 		zap.String("request_id", reqID),
 	)
 	c.JSON(http.StatusOK, product)
 }
 
-// GetProductBySlug obtém um produto por slug
+// GetProductBySlug handles GET /products/slug/:slug requests.
 func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
 
 	if slug == "" {
-		logger.L().Warn("Slug vazio em GetProductBySlug", zap.String("request_id", reqID))
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "Slug do produto é obrigatório"))
+		logger.L().Warn("empty slug in GetProductBySlug", zap.String("request_id", reqID))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "product slug is required"))
 		return
 	}
 
 	product, err := h.service.GetProductBySlug(slug)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if err.Error() == "product not found" {
-			status = http.StatusNotFound
-		}
-		logger.L().Error("Erro ao buscar produto por slug",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to get product by slug",
 			zap.Error(err),
 			zap.String("slug", slug),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
-	logger.L().Info("Produto recuperado por slug",
+	logger.L().Info(
+		"product retrieved by slug",
 		zap.String("slug", slug),
 		zap.String("request_id", reqID),
 	)
 	c.JSON(http.StatusOK, product)
 }
 
-// UpdateProduct atualiza um produto existente
+// UpdateProduct handles PUT /products/:id requests.
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		logger.L().Warn("ID inválido em UpdateProduct",
+		logger.L().Warn(
+			"invalid ID in UpdateProduct",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do produto inválido"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
 		return
 	}
 
 	var req updateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.L().Warn("Requisição inválida em UpdateProduct",
+		logger.L().Warn(
+			"invalid request in UpdateProduct",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
@@ -199,16 +196,14 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 
 	existing, err := h.service.GetProductByID(id)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if err.Error() == "product not found" {
-			status = http.StatusNotFound
-		}
-		logger.L().Error("Erro ao buscar produto existente em UpdateProduct",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to find product in UpdateProduct",
 			zap.Error(err),
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
@@ -229,69 +224,63 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	if err := h.service.UpdateProduct(id, existing); err != nil {
-		status := http.StatusInternalServerError
-		switch err.Error() {
-		case "product not found":
-			status = http.StatusNotFound
-		case "product with this slug already exists":
-			status = http.StatusConflict
-		case "name is required", "slug is required", "price must be greater than zero":
-			status = http.StatusBadRequest
-		}
-		logger.L().Error("Erro ao atualizar produto",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to update product",
 			zap.Error(err),
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
 	updatedProduct, _ := h.service.GetProductByID(id)
-	logger.L().Info("Produto atualizado com sucesso",
+	logger.L().Info(
+		"product updated successfully",
 		zap.Int("id", id),
 		zap.String("request_id", reqID),
 	)
 	c.JSON(http.StatusOK, updatedProduct)
 }
 
-// DeleteProduct remove um produto
+// DeleteProduct handles DELETE /products/:id requests.
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		logger.L().Warn("ID inválido em DeleteProduct",
+		logger.L().Warn(
+			"invalid ID in DeleteProduct",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do produto inválido"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
 		return
 	}
 
 	if err := h.service.DeleteProduct(id); err != nil {
-		status := http.StatusInternalServerError
-		if err.Error() == "product not found" {
-			status = http.StatusNotFound
-		}
-		logger.L().Error("Erro ao deletar produto",
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to delete product",
 			zap.Error(err),
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse("service_error", err.Error()))
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
 		return
 	}
 
-	logger.L().Info("Produto excluído com sucesso",
+	logger.L().Info(
+		"product deleted successfully",
 		zap.Int("id", id),
 		zap.String("request_id", reqID),
 	)
 	c.Status(http.StatusNoContent)
 }
 
-// ListProducts lista produtos com paginação e filtros
+// ListProducts handles GET /products with pagination and filters.
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -310,7 +299,6 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 			filters["category_id = ?"] = catID
 		}
 	}
-
 	if isActive := c.Query("is_active"); isActive != "" {
 		if active, err := strconv.ParseBool(isActive); err == nil {
 			filters["is_active = ?"] = active
@@ -319,26 +307,21 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 
 	products, total, err := h.service.ListProducts(limit, page, filters)
 	if err != nil {
-		logger.L().Error("Erro ao listar produtos",
+		logger.L().Error(
+			"failed to list products",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "Erro ao listar produtos"))
+		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list products"))
 		return
 	}
 
-	logger.L().Info("Listagem de produtos realizada",
+	logger.L().Info(
+		"products listed successfully",
 		zap.Int("page", page),
 		zap.Int("limit", limit),
 		zap.Int64("total", total),
 		zap.String("request_id", reqID),
 	)
-
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(
-		products,
-		total,
-		page,
-		limit,
-		c.Request.URL.Path,
-	))
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(products, total, page, limit, c.Request.URL.Path))
 }

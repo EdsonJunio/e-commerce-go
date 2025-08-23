@@ -12,11 +12,37 @@ import (
 	producthttp "e-commerce-go/internal/product/delivery/http"
 	"e-commerce-go/internal/product/domain"
 	"e-commerce-go/internal/shared/response"
+	"e-commerce-go/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+func init() {
+	// Initialize test logger
+	zapCfg := zap.NewDevelopmentConfig()
+	zapCfg.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	zapCfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zapCfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zapCfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	zapCfg.OutputPaths = []string{"stdout"}
+	zapCfg.ErrorOutputPaths = []string{"stderr"}
+
+	testLogger, _ := zapCfg.Build()
+
+	// Override the global logger with test configuration
+	logger.Init(logger.Config{
+		Environment: "test",
+		Service:     "product-handler-test",
+		Version:     "test",
+	})
+
+	// Replace the global logger with our test logger
+	zap.ReplaceGlobals(testLogger)
+}
 
 type mockService struct {
 	mock.Mock

@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// RegisterCustomValidations registra validações personalizadas
+// RegisterCustomValidations registers custom validation rules.
 func RegisterCustomValidations() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		_ = v.RegisterValidation("slug", func(fl validator.FieldLevel) bool {
@@ -21,7 +21,7 @@ func RegisterCustomValidations() {
 	}
 }
 
-// ErrorHandler é um middleware para tratamento de erros de validação
+// ErrorHandler is a middleware for handling validation and internal errors.
 func ErrorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
@@ -46,20 +46,20 @@ func ErrorHandler() gin.HandlerFunc {
 	}
 }
 
-// fieldErrorToMessage converte um erro de validação em uma mensagem legível
+// fieldErrorToMessage converts a validation error into a human-readable message.
 func fieldErrorToMessage(fieldErr validator.FieldError) string {
 	switch fieldErr.Tag() {
 	case "required":
-		return fieldErr.Field() + " é obrigatório"
+		return fieldErr.Field() + " is required"
 	case "min":
-		return fieldErr.Field() + " deve ter pelo menos " + fieldErr.Param() + " caracteres"
+		return fieldErr.Field() + " must have at least " + fieldErr.Param() + " characters"
 	case "max":
-		return fieldErr.Field() + " deve ter no máximo " + fieldErr.Param() + " caracteres"
+		return fieldErr.Field() + " must have at most " + fieldErr.Param() + " characters"
 	case "email":
-		return "E-mail inválido"
+		return "invalid email format"
 	case "slug":
-		return fieldErr.Field() + " deve conter apenas letras minúsculas, números e hífens"
+		return fieldErr.Field() + " must contain only lowercase letters, numbers, and hyphens"
 	default:
-		return fieldErr.Field() + " é inválido"
+		return fieldErr.Field() + " is invalid"
 	}
 }

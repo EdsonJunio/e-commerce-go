@@ -15,7 +15,8 @@ import (
 	glogger "gorm.io/gorm/logger"
 )
 
-// ConnectDB estabelece uma conexão com o banco de dados usando as configurações fornecidas
+// ConnectDB establishes a connection to the database using the loaded configuration.
+// It retries with exponential backoff until the context expires or max retries are reached.
 func ConnectDB() (*gorm.DB, error) {
 	cfg := config.Load()
 
@@ -32,7 +33,9 @@ func ConnectDB() (*gorm.DB, error) {
 		cfg.Database.SSLMode,
 	)
 
-	masked := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s",
+	// Masked DSN (without password) for safe logging.
+	masked := fmt.Sprintf(
+		"host=%s port=%s user=%s dbname=%s sslmode=%s",
 		cfg.Database.Host,
 		cfg.Database.Port,
 		cfg.Database.User,
@@ -71,24 +74,35 @@ func ConnectDB() (*gorm.DB, error) {
 				configurePool(sqlDB)
 
 				if err = sqlDB.PingContext(ctx); err == nil {
-					fmt.Fprintf(os.Stdout, "[db] Successfully connected to database after %d attempts\n", i+1)
+					fmt.Fprintf(
+						os.Stdout,
+						"[db] Successfully connected to database after %d attempts\n",
+						i+1,
+					)
 					return db, nil
 				}
 			}
 
 			if i < maxRetries-1 {
 				nextRetry := time.Duration(i+1) * retryDelay
-				fmt.Fprintf(os.Stdout, "[db] Attempt %d/%d failed: %v. Retrying in %v...\n",
-					i+1, maxRetries, err, nextRetry)
+				fmt.Fprintf(
+					os.Stdout,
+					"[db] Attempt %d/%d failed: %v. Retrying in %v...\n",
+					i+1, maxRetries, err, nextRetry,
+				)
 				time.Sleep(nextRetry)
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
+	return nil, fmt.Errorf(
+		"failed to connect to database after %d attempts: %w",
+		maxRetries,
+		err,
+	)
 }
 
-// configurePool configura o pool de conexões do banco de dados
+// configurePool sets up the database connection pool with values from configuration.
 func configurePool(sqlDB *sql.DB) {
 	cfg := config.Load()
 
@@ -96,11 +110,15 @@ func configurePool(sqlDB *sql.DB) {
 	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	sqlDB.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 
-	log.Printf("Pool de conexões configurado: MaxIdleConns=%d, MaxOpenConns=%d, ConnMaxLifetime=%v",
-		cfg.Database.MaxIdleConns, cfg.Database.MaxOpenConns, cfg.Database.ConnMaxLifetime)
+	log.Printf(
+		"Database pool configured: MaxIdleConns=%d, MaxOpenConns=%d, ConnMaxLifetime=%v",
+		cfg.Database.MaxIdleConns,
+		cfg.Database.MaxOpenConns,
+		cfg.Database.ConnMaxLifetime,
+	)
 }
 
-// newGormLogger cria um novo logger para o GORM baseado no nível especificado
+// newGormLogger returns a GORM logger configured with the specified log level.
 func newGormLogger(level string) glogger.Interface {
 	var lvl glogger.LogLevel
 
@@ -117,6 +135,6 @@ func newGormLogger(level string) glogger.Interface {
 		lvl = glogger.Warn
 	}
 
-	log.Printf("Nível de log do GORM configurado para: %s", level)
+	log.Printf("GORM log level set to: %s", level)
 	return glogger.Default.LogMode(lvl)
 }

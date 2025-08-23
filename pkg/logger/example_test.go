@@ -17,46 +17,46 @@ func TestLoggerInitializationAndUsage(t *testing.T) {
 		Version:     "v1.0.0",
 	})
 	if err != nil {
-		t.Fatalf("Erro ao inicializar o logger: %v", err)
+		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
 
-	t.Run("Log simples", func(t *testing.T) {
-		logger.L().Info("Aplicação iniciada")
+	t.Run("Simple log", func(t *testing.T) {
+		logger.L().Info("Application started")
 	})
 
-	t.Run("Log com campos estruturados", func(t *testing.T) {
-		logger.L().Info("Usuário autenticado",
+	t.Run("Log with structured fields", func(t *testing.T) {
+		logger.L().Info("User authenticated",
 			zap.String("user_id", "123"),
-			zap.String("email", "usuario@exemplo.com"),
+			zap.String("email", "user@example.com"),
 		)
 	})
 
-	t.Run("Log de erro com stack trace", func(t *testing.T) {
+	t.Run("Error log with stack trace", func(t *testing.T) {
 		err := simulateError()
 		if err != nil {
-			logger.L().Error("Falha ao processar requisição",
+			logger.L().Error("Failed to process request",
 				zap.Error(err),
-				zap.String("operation", "processar_requisicao"),
+				zap.String("operation", "process_request"),
 			)
 		}
 	})
 
-	t.Run("Logger com campos via With", func(t *testing.T) {
+	t.Run("Logger with fields using With", func(t *testing.T) {
 		logger.With(
 			zap.String("request_id", "abc123"),
 			zap.String("service", "payment"),
-		).Info("Pagamento processado")
+		).Info("Payment processed")
 	})
 }
 
 func simulateError() error {
-	return errors.New("erro simulado")
+	return errors.New("simulated error")
 }
 
 func TestLoggerWithZapTest(t *testing.T) {
-	// Usa zaptest para logger fake (isolado de stdout/stderr)
+	// Uses zaptest to create an isolated logger (no stdout/stderr pollution)
 	zapLogger := zaptest.NewLogger(t)
-	zapLogger.Info("Log de teste isolado")
-	zapLogger.Warn("Aviso de teste", zap.String("etapa", "setup"))
+	zapLogger.Info("Isolated test log")
+	zapLogger.Warn("Test warning", zap.String("step", "setup"))
 }

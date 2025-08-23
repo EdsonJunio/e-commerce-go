@@ -5,7 +5,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	_ = godotenv.Load(".env.local")
+	_ = godotenv.Load()
+}
 
 // Config contém todas as configurações da aplicação
 type Config struct {
