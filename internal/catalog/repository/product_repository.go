@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"e-commerce-go/internal/product/domain"
+	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/pkg/logger"
 
 	"github.com/jackc/pgconn"
@@ -22,27 +22,35 @@ func NewProductRepository(db *gorm.DB) domain.Repository {
 	return &productRepository{db: db}
 }
 
-// Create inserts a new product in the database.
-// Returns ErrSlugExists if the slug already exists.
-func (r *productRepository) Create(product *domain.Product) error {
-	err := r.db.Create(product).Error
-	if err != nil {
-		if isUniqueViolation(err) {
-			logger.L().Warn(
-				"unique constraint violation while creating product",
-				zap.String("slug", product.Slug),
-				zap.Error(err),
-			)
-			return domain.ErrSlugExists
-		}
-		logger.L().Error(
-			"failed to create product in database",
-			zap.String("slug", product.Slug),
-			zap.Error(err),
-		)
-		return err
+// List returns products with pagination and filters.
+func (r *productRepository) List(limit, offset int, filters map[string]interface{}) ([]domain.Product, int64, error) {
+	var products []domain.Product
+	var total int64
+
+	tx := r.db.Model(&domain.Product{})
+	for key, value := range filters {
+		tx = tx.Where(key, value)
 	}
-	return nil
+
+	if err := tx.Count(&total).Error; err != nil {
+		logger.L().Error(
+			"failed to count products",
+			zap.Error(err),
+			zap.Any("filters", filters),
+		)
+		return nil, 0, err
+	}
+
+	if err := tx.Offset(offset).Limit(limit).Find(&products).Error; err != nil {
+		logger.L().Error(
+			"failed to list products",
+			zap.Error(err),
+			zap.Any("filters", filters),
+		)
+		return nil, 0, err
+	}
+
+	return products, total, nil
 }
 
 // FindByID fetches a product by ID.
@@ -83,6 +91,29 @@ func (r *productRepository) FindBySlug(slug string) (*domain.Product, error) {
 		return nil, err
 	}
 	return &product, nil
+}
+
+// Create inserts a new product in the database.
+// Returns ErrSlugExists if the slug already exists.
+func (r *productRepository) Create(product *domain.Product) error {
+	err := r.db.Create(product).Error
+	if err != nil {
+		if isUniqueViolation(err) {
+			logger.L().Warn(
+				"unique constraint violation while creating product",
+				zap.String("slug", product.Slug),
+				zap.Error(err),
+			)
+			return domain.ErrSlugExists
+		}
+		logger.L().Error(
+			"failed to create product in database",
+			zap.String("slug", product.Slug),
+			zap.Error(err),
+		)
+		return err
+	}
+	return nil
 }
 
 // Update saves product changes in the database.
@@ -126,37 +157,6 @@ func (r *productRepository) Delete(id int) error {
 		return domain.ErrNotFound
 	}
 	return nil
-}
-
-// List returns products with pagination and filters.
-func (r *productRepository) List(limit, offset int, filters map[string]interface{}) ([]domain.Product, int64, error) {
-	var products []domain.Product
-	var total int64
-
-	tx := r.db.Model(&domain.Product{})
-	for key, value := range filters {
-		tx = tx.Where(key, value)
-	}
-
-	if err := tx.Count(&total).Error; err != nil {
-		logger.L().Error(
-			"failed to count products",
-			zap.Error(err),
-			zap.Any("filters", filters),
-		)
-		return nil, 0, err
-	}
-
-	if err := tx.Offset(offset).Limit(limit).Find(&products).Error; err != nil {
-		logger.L().Error(
-			"failed to list products",
-			zap.Error(err),
-			zap.Any("filters", filters),
-		)
-		return nil, 0, err
-	}
-
-	return products, total, nil
 }
 
 // isUniqueViolation checks if the error corresponds to a UNIQUE constraint violation.

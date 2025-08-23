@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"e-commerce-go/internal/product/domain"
+	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/internal/shared/response"
 	"e-commerce-go/pkg/logger"
 
@@ -44,58 +44,60 @@ func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 	{
 		products := v1.Group("/products")
 		{
-			products.POST("", h.CreateProduct)
 			products.GET("", h.ListProducts)
 			products.GET("/:id", h.GetProduct)
+			products.GET("/slug/:slug", h.GetProductBySlug)
+			products.POST("", h.CreateProduct)
 			products.PUT("/:id", h.UpdateProduct)
 			products.DELETE("/:id", h.DeleteProduct)
-			products.GET("/slug/:slug", h.GetProductBySlug)
 		}
 	}
 }
 
-// CreateProduct handles POST /products requests.
-func (h *ProductHandler) CreateProduct(c *gin.Context) {
+// ListProducts handles GET /products with pagination and filters.
+func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
-
-	var req createProductRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.L().Warn(
-			"invalid request in CreateProduct",
-			zap.Error(err),
-			zap.String("request_id", reqID),
-		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
-		return
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page <= 0 {
+		page = 1
 	}
 
-	product := &domain.Product{
-		CategoryID: req.CategoryID,
-		Name:       strings.TrimSpace(req.Name),
-		Slug:       strings.TrimSpace(req.Slug),
-		PriceCents: req.PriceCents,
-		IsActive:   req.IsActive,
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit <= 0 || limit > 100 {
+		limit = 10
 	}
 
-	if err := h.service.CreateProduct(product); err != nil {
-		code, status := ProductHTTPCode(err)
+	filters := make(map[string]interface{})
+	if categoryID := c.Query("category_id"); categoryID != "" {
+		if catID, err := strconv.Atoi(categoryID); err == nil {
+			filters["category_id = ?"] = catID
+		}
+	}
+	if isActive := c.Query("is_active"); isActive != "" {
+		if active, err := strconv.ParseBool(isActive); err == nil {
+			filters["is_active = ?"] = active
+		}
+	}
+
+	products, total, err := h.service.ListProducts(limit, page, filters)
+	if err != nil {
 		logger.L().Error(
-			"failed to create product",
+			"failed to list products",
 			zap.Error(err),
-			zap.String("slug", req.Slug),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list products"))
 		return
 	}
 
 	logger.L().Info(
-		"product created successfully",
-		zap.Int("product_id", product.ID),
-		zap.String("slug", product.Slug),
+		"products listed successfully",
+		zap.Int("page", page),
+		zap.Int("limit", limit),
+		zap.Int64("total", total),
 		zap.String("request_id", reqID),
 	)
-	c.JSON(http.StatusCreated, product)
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(products, total, page, limit, c.Request.URL.Path))
 }
 
 // GetProduct handles GET /products/:id requests.
@@ -165,6 +167,50 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 		zap.String("request_id", reqID),
 	)
 	c.JSON(http.StatusOK, product)
+}
+
+// CreateProduct handles POST /products requests.
+func (h *ProductHandler) CreateProduct(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
+
+	var req createProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.L().Warn(
+			"invalid request in CreateProduct",
+			zap.Error(err),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
+		return
+	}
+
+	product := &domain.Product{
+		CategoryID: req.CategoryID,
+		Name:       strings.TrimSpace(req.Name),
+		Slug:       strings.TrimSpace(req.Slug),
+		PriceCents: req.PriceCents,
+		IsActive:   req.IsActive,
+	}
+
+	if err := h.service.CreateProduct(product); err != nil {
+		code, status := ProductHTTPCode(err)
+		logger.L().Error(
+			"failed to create product",
+			zap.Error(err),
+			zap.String("slug", req.Slug),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+		return
+	}
+
+	logger.L().Info(
+		"product created successfully",
+		zap.Int("product_id", product.ID),
+		zap.String("slug", product.Slug),
+		zap.String("request_id", reqID),
+	)
+	c.JSON(http.StatusCreated, product)
 }
 
 // UpdateProduct handles PUT /products/:id requests.
@@ -278,50 +324,4 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		zap.String("request_id", reqID),
 	)
 	c.Status(http.StatusNoContent)
-}
-
-// ListProducts handles GET /products with pagination and filters.
-func (h *ProductHandler) ListProducts(c *gin.Context) {
-	reqID := c.Writer.Header().Get("X-Request-ID")
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page <= 0 {
-		page = 1
-	}
-
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
-
-	filters := make(map[string]interface{})
-	if categoryID := c.Query("category_id"); categoryID != "" {
-		if catID, err := strconv.Atoi(categoryID); err == nil {
-			filters["category_id = ?"] = catID
-		}
-	}
-	if isActive := c.Query("is_active"); isActive != "" {
-		if active, err := strconv.ParseBool(isActive); err == nil {
-			filters["is_active = ?"] = active
-		}
-	}
-
-	products, total, err := h.service.ListProducts(limit, page, filters)
-	if err != nil {
-		logger.L().Error(
-			"failed to list products",
-			zap.Error(err),
-			zap.String("request_id", reqID),
-		)
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list products"))
-		return
-	}
-
-	logger.L().Info(
-		"products listed successfully",
-		zap.Int("page", page),
-		zap.Int("limit", limit),
-		zap.Int64("total", total),
-		zap.String("request_id", reqID),
-	)
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(products, total, page, limit, c.Request.URL.Path))
 }

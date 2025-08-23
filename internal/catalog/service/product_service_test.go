@@ -1,11 +1,11 @@
 package service_test
 
 import (
+	"e-commerce-go/internal/catalog/service"
 	"testing"
 	"time"
 
-	"e-commerce-go/internal/product/domain"
-	"e-commerce-go/internal/product/service"
+	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/pkg/logger"
 
 	"github.com/stretchr/testify/assert"

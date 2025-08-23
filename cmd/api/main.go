@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	productHTTP "e-commerce-go/internal/catalog/delivery/http"
+	"e-commerce-go/internal/catalog/repository"
+	"e-commerce-go/internal/catalog/service"
 	"errors"
 	"log"
 	"net/http"
@@ -10,9 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	productHTTP "e-commerce-go/internal/product/delivery/http"
-	"e-commerce-go/internal/product/repository"
-	"e-commerce-go/internal/product/service"
 	"e-commerce-go/internal/shared/config"
 	"e-commerce-go/internal/shared/database"
 	"e-commerce-go/internal/shared/middleware"
