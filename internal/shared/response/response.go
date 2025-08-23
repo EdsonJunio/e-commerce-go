@@ -7,19 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ErrorResponse representa uma resposta de erro padronizada
+// ErrorResponse represents a standardized error response.
 type ErrorResponse struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-// PaginatedResponse representa uma resposta paginada
+// PaginatedResponse represents a paginated response.
 type PaginatedResponse struct {
 	Data       interface{} `json:"data"`
 	Pagination Pagination  `json:"pagination"`
 }
 
-// Pagination contém informações de paginação
+// Pagination contains pagination details.
 type Pagination struct {
 	Total   int64  `json:"total"`
 	Page    int    `json:"page"`
@@ -30,7 +30,7 @@ type Pagination struct {
 	PrevURL string `json:"prev_url,omitempty"`
 }
 
-// NewErrorResponse cria uma nova resposta de erro
+// NewErrorResponse creates a new error response.
 func NewErrorResponse(code, message string) ErrorResponse {
 	return ErrorResponse{
 		Code:    code,
@@ -38,14 +38,14 @@ func NewErrorResponse(code, message string) ErrorResponse {
 	}
 }
 
-// NewSuccessResponse cria uma nova resposta de sucesso
+// NewSuccessResponse creates a new success response.
 func NewSuccessResponse(data interface{}) gin.H {
 	return gin.H{
 		"data": data,
 	}
 }
 
-// NewPaginatedResponse cria uma nova resposta paginada
+// NewPaginatedResponse creates a new paginated response.
 func NewPaginatedResponse(data interface{}, total int64, page, limit int, basePath string) PaginatedResponse {
 	pages := int((total + int64(limit) - 1) / int64(limit))
 	hasMore := page*limit < int(total)
@@ -74,27 +74,27 @@ func NewPaginatedResponse(data interface{}, total int64, page, limit int, basePa
 	}
 }
 
-// buildPaginationURL constrói a URL para paginação
+// buildPaginationURL builds the pagination URL.
 func buildPaginationURL(basePath string, page, limit int) string {
 	return path.Join("/", basePath) + "?page=" + strconv.Itoa(page) + "&limit=" + strconv.Itoa(limit)
 }
 
-// AbortWithError aborta a requisição com uma mensagem de erro
+// AbortWithError aborts the request with an error response.
 func AbortWithError(c *gin.Context, status int, code, message string) {
 	c.AbortWithStatusJSON(status, NewErrorResponse(code, message))
 }
 
-// Success envia uma resposta de sucesso
+// Success sends a success response.
 func Success(c *gin.Context, status int, data interface{}) {
 	c.JSON(status, NewSuccessResponse(data))
 }
 
-// SuccessPaginated envia uma resposta de sucesso paginada
+// SuccessPaginated sends a paginated success response.
 func SuccessPaginated(c *gin.Context, status int, data interface{}, total int64, page, limit int) {
 	c.JSON(status, NewPaginatedResponse(data, total, page, limit, c.Request.URL.Path))
 }
 
-// Error envia uma resposta de erro
+// Error sends an error response.
 func Error(c *gin.Context, status int, code, message string) {
 	c.JSON(status, NewErrorResponse(code, message))
 }

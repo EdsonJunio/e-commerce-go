@@ -1,9 +1,8 @@
 package domain
 
-import (
-	"time"
-)
+import "time"
 
+// Product represents the product aggregate persisted in the database.
 type Product struct {
 	ID         int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	CategoryID int        `gorm:"column:category_id;not null" json:"category_id"`
@@ -16,12 +15,12 @@ type Product struct {
 	DeletedAt  *time.Time `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
 }
 
-// TableName define o nome da tabela no banco de dados
+// TableName sets the table name for GORM.
 func (Product) TableName() string {
 	return "products"
 }
 
-// Repository define a interface para operações de banco de dados para Product
+// Repository defines the DB access contract for Product.
 type Repository interface {
 	Create(product *Product) error
 	FindByID(id int) (*Product, error)
@@ -31,7 +30,7 @@ type Repository interface {
 	List(limit, offset int, filters map[string]interface{}) ([]Product, int64, error)
 }
 
-// Service define a interface para a lógica de negócios de Product
+// Service defines the business logic contract for Product.
 type Service interface {
 	CreateProduct(product *Product) error
 	GetProductByID(id int) (*Product, error)

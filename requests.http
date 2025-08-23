@@ -11,7 +11,7 @@ GET {{baseUrl}}/products/1
 Content-Type: application/json
 
 ### Get product by slug
-GET {{baseUrl}}/products/slug/new-product
+GET {{baseUrl}}/products/slug/new-product5
 Content-Type: application/json
 
 ### Create a new product
@@ -20,8 +20,8 @@ Content-Type: application/json
 
 {
   "category_id": 1,
-  "name": "New Product5",
-  "slug": "new-product5",
+  "name": "New Product55",
+  "slug": "new-product55",
   "price_cents": 1999,
   "is_active": true
 }
@@ -32,7 +32,7 @@ Content-Type: application/json
 
 {
   "name": "Updated Product Name",
-  "price_cents": 24993,
+  "price_cents": 249933,
   "is_active": false
 }
 
