@@ -85,10 +85,10 @@ func bootServer() (*http.Server, *gorm.DB, error) {
 	productHandler.RegisterProductRoutes(r)
 
 	// Category module wiring.
-	categoryRepo := repository.NewCategoryRepository(db)
-	categorySvc := service.NewCategoryService(categoryRepo)
-	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
-	categoryHandler.RegisterCategoryRoutes(r)
+	//	categoryRepo := repository.NewCategoryRepository(db)
+	//	categorySvc := service.NewCategoryService(categoryRepo)
+	//	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
+	//	categoryHandler.RegisterCategoryRoutes(r)
 
 	// Build HTTP server.
 	srv := &http.Server{

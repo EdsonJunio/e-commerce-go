@@ -48,7 +48,7 @@ func (cate *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 
 // ListCategories handles GET /categories with pagination and filters.
 func (cate *CategoryHandler) ListCategories(c *gin.Context) {
-	reqID := c.Writer.Header().Get("X-Request-ID")
+	//reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page <= 0 {
 		page = 1
@@ -59,8 +59,8 @@ func (cate *CategoryHandler) ListCategories(c *gin.Context) {
 		limit = 10
 	}
 
-	filter := make(map[string]interface{})
-	if cate
+	//	filter := make(map[string]interface{})
+	//	if cate
 }
 
 // GetCategory handles GET /categories/:id request.
