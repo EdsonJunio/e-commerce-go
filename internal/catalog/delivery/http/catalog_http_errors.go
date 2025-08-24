@@ -7,9 +7,9 @@ import (
 	"e-commerce-go/internal/catalog/domain"
 )
 
-// ProductHTTPCode maps domain errors to HTTP status codes and response codes.
+// CategoryHTTPCode maps domain errors to HTTP status codes and response codes.
 // It ensures transport layer stays decoupled from domain logic.
-func ProductHTTPCode(err error) (string, int) {
+func CategoryHTTPCode(err error) (string, int) {
 	switch {
 	case err == nil:
 		return "", http.StatusOK

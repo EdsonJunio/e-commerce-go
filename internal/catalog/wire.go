@@ -18,3 +18,13 @@ func InitializeProductHandler(db *gorm.DB) *http.ProductHandler {
 	)
 	return &http.ProductHandler{}
 }
+
+// InitializeCategoryHandler Initialize Handler HTTP of Categories with all dependencies
+func InitializeCategoryHandler(db *gorm.DB) *http.CategoryHandler {
+	wire.Build(
+		repository.NewCategoryRepository,
+		service.NewCategoryService,
+		http.NewCategoryHandler,
+	)
+	return &http.CategoryHandler{}
+}

@@ -20,22 +20,22 @@ func (Product) TableName() string {
 	return "products"
 }
 
-// Repository defines the DB access contract for Product.
-type Repository interface {
-	Create(product *Product) error
+// ProductRepository defines the DB access contract for Product.
+type ProductRepository interface {
+	List(limit, offset int, filters map[string]interface{}) ([]Product, int64, error)
 	FindByID(id int) (*Product, error)
 	FindBySlug(slug string) (*Product, error)
+	Create(product *Product) error
 	Update(product *Product) error
 	Delete(id int) error
-	List(limit, offset int, filters map[string]interface{}) ([]Product, int64, error)
 }
 
-// Service defines the business logic contract for Product.
-type Service interface {
-	CreateProduct(product *Product) error
+// ProductService defines the business logic contract for Product.
+type ProductService interface {
+	ListProducts(limit, page int, filters map[string]interface{}) ([]Product, int64, error)
 	GetProductByID(id int) (*Product, error)
 	GetProductBySlug(slug string) (*Product, error)
+	CreateProduct(product *Product) error
 	UpdateProduct(id int, product *Product) error
 	DeleteProduct(id int) error
-	ListProducts(limit, page int, filters map[string]interface{}) ([]Product, int64, error)
 }

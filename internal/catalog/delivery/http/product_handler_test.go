@@ -84,11 +84,11 @@ func (m *mockService) ListProducts(limit, page int, filters map[string]interface
 	return args.Get(0).([]domain.Product), args.Get(1).(int64), args.Error(2)
 }
 
-func setupRouter(service domain.Service) *gin.Engine {
+func setupRouter(service domain.ProductService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	handler := producthttp.NewProductHandler(service)
-	handler.RegisterRoutes(r)
+	handler.RegisterProductRoutes(r)
 	return r
 }
 

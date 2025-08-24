@@ -14,7 +14,7 @@ import (
 )
 
 type ProductHandler struct {
-	service domain.Service
+	service domain.ProductService
 }
 
 type createProductRequest struct {
@@ -34,28 +34,28 @@ type updateProductRequest struct {
 }
 
 // NewProductHandler returns a new ProductHandler with the given service.
-func NewProductHandler(service domain.Service) *ProductHandler {
+func NewProductHandler(service domain.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// RegisterRoutes registers product endpoints in the Gin router.
-func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
+// RegisterProductRoutes registers product endpoints in the Gin router.
+func (prod *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		products := v1.Group("/products")
 		{
-			products.GET("", h.ListProducts)
-			products.GET("/:id", h.GetProduct)
-			products.GET("/slug/:slug", h.GetProductBySlug)
-			products.POST("", h.CreateProduct)
-			products.PUT("/:id", h.UpdateProduct)
-			products.DELETE("/:id", h.DeleteProduct)
+			products.GET("", prod.ListProducts)
+			products.GET("/:id", prod.GetProduct)
+			products.GET("/slug/:slug", prod.GetProductBySlug)
+			products.POST("", prod.CreateProduct)
+			products.PUT("/:id", prod.UpdateProduct)
+			products.DELETE("/:id", prod.DeleteProduct)
 		}
 	}
 }
 
 // ListProducts handles GET /products with pagination and filters.
-func (h *ProductHandler) ListProducts(c *gin.Context) {
+func (prod *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page <= 0 {
@@ -79,7 +79,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		}
 	}
 
-	products, total, err := h.service.ListProducts(limit, page, filters)
+	products, total, err := prod.service.ListProducts(limit, page, filters)
 	if err != nil {
 		logger.L().Error(
 			"failed to list products",
@@ -101,7 +101,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 }
 
 // GetProduct handles GET /products/:id requests.
-func (h *ProductHandler) GetProduct(c *gin.Context) {
+func (prod *ProductHandler) GetProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -116,9 +116,9 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := h.service.GetProductByID(id)
+	product, err := prod.service.GetProductByID(id)
 	if err != nil {
-		code, status := ProductHTTPCode(err)
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to get product by ID",
 			zap.Error(err),
@@ -138,7 +138,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 }
 
 // GetProductBySlug handles GET /products/slug/:slug requests.
-func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
+func (prod *ProductHandler) GetProductBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
 
@@ -148,9 +148,9 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 		return
 	}
 
-	product, err := h.service.GetProductBySlug(slug)
+	product, err := prod.service.GetProductBySlug(slug)
 	if err != nil {
-		code, status := ProductHTTPCode(err)
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to get product by slug",
 			zap.Error(err),
@@ -170,7 +170,7 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 }
 
 // CreateProduct handles POST /products requests.
-func (h *ProductHandler) CreateProduct(c *gin.Context) {
+func (prod *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
 	var req createProductRequest
@@ -192,8 +192,8 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		IsActive:   req.IsActive,
 	}
 
-	if err := h.service.CreateProduct(product); err != nil {
-		code, status := ProductHTTPCode(err)
+	if err := prod.service.CreateProduct(product); err != nil {
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to create product",
 			zap.Error(err),
@@ -214,7 +214,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 }
 
 // UpdateProduct handles PUT /products/:id requests.
-func (h *ProductHandler) UpdateProduct(c *gin.Context) {
+func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -240,9 +240,9 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.service.GetProductByID(id)
+	existing, err := prod.service.GetProductByID(id)
 	if err != nil {
-		code, status := ProductHTTPCode(err)
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to find product in UpdateProduct",
 			zap.Error(err),
@@ -269,8 +269,8 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		existing.IsActive = *req.IsActive
 	}
 
-	if err := h.service.UpdateProduct(id, existing); err != nil {
-		code, status := ProductHTTPCode(err)
+	if err := prod.service.UpdateProduct(id, existing); err != nil {
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to update product",
 			zap.Error(err),
@@ -281,7 +281,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	updatedProduct, _ := h.service.GetProductByID(id)
+	updatedProduct, _ := prod.service.GetProductByID(id)
 	logger.L().Info(
 		"product updated successfully",
 		zap.Int("id", id),
@@ -291,7 +291,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 }
 
 // DeleteProduct handles DELETE /products/:id requests.
-func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+func (prod *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -306,8 +306,8 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteProduct(id); err != nil {
-		code, status := ProductHTTPCode(err)
+	if err := prod.service.DeleteProduct(id); err != nil {
+		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to delete product",
 			zap.Error(err),
