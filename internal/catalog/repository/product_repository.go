@@ -18,7 +18,7 @@ type productRepository struct {
 
 // NewProductRepository returns a new product repository backed by GORM.
 // The caller is responsible for managing the lifecycle of db.
-func NewProductRepository(db *gorm.DB) domain.Repository {
+func NewProductRepository(db *gorm.DB) domain.ProductRepository {
 	return &productRepository{db: db}
 }
 

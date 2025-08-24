@@ -43,3 +43,11 @@ Content-Type: application/json
 ### Health check
 GET http://localhost:8080/health
 Content-Type: application/json
+
+#########################################################
+
+### List all categories
+GET {{baseUrl}}/categories?page=1&limit=10
+Content-Type: application/json
+
+

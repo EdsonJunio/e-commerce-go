@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	productHTTP "e-commerce-go/internal/catalog/delivery/http"
+	categoryHTTP "e-commerce-go/internal/catalog/delivery/http"
 	"e-commerce-go/internal/catalog/repository"
 	"e-commerce-go/internal/catalog/service"
 	"errors"
@@ -81,8 +81,14 @@ func bootServer() (*http.Server, *gorm.DB, error) {
 	// Product module wiring.
 	productRepo := repository.NewProductRepository(db)
 	productSvc := service.NewProductService(productRepo)
-	productHandler := productHTTP.NewProductHandler(productSvc)
-	productHandler.RegisterRoutes(r)
+	productHandler := categoryHTTP.NewProductHandler(productSvc)
+	productHandler.RegisterProductRoutes(r)
+
+	// Category module wiring.
+	//	categoryRepo := repository.NewCategoryRepository(db)
+	//	categorySvc := service.NewCategoryService(categoryRepo)
+	//	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
+	//	categoryHandler.RegisterCategoryRoutes(r)
 
 	// Build HTTP server.
 	srv := &http.Server{

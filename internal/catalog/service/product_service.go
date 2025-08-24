@@ -10,11 +10,11 @@ import (
 )
 
 type productService struct {
-	repo domain.Repository
+	repo domain.ProductRepository
 }
 
-// NewProductService returns a new instance of productService implementing domain.Service.
-func NewProductService(repo domain.Repository) domain.Service {
+// NewProductService returns a new instance of productService implementing domain.ProductService.
+func NewProductService(repo domain.ProductRepository) domain.ProductService {
 	return &productService{repo: repo}
 }
 
