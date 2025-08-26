@@ -39,23 +39,23 @@ func NewProductHandler(service domain.ProductService) *ProductHandler {
 }
 
 // RegisterProductRoutes registers product endpoints in the Gin router.
-func (prod *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
+func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		products := v1.Group("/products")
 		{
-			products.GET("", prod.ListProducts)
-			products.GET("/:id", prod.GetProduct)
-			products.GET("/slug/:slug", prod.GetProductBySlug)
-			products.POST("", prod.CreateProduct)
-			products.PUT("/:id", prod.UpdateProduct)
-			products.DELETE("/:id", prod.DeleteProduct)
+			products.GET("", h.ListProducts)
+			products.GET("/:id", h.GetProduct)
+			products.GET("/slug/:slug", h.GetProductBySlug)
+			products.POST("", h.CreateProduct)
+			products.PUT("/:id", h.UpdateProduct)
+			products.DELETE("/:id", h.DeleteProduct)
 		}
 	}
 }
 
 // ListProducts handles GET /products with pagination and filters.
-func (prod *ProductHandler) ListProducts(c *gin.Context) {
+func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page <= 0 {
@@ -79,7 +79,7 @@ func (prod *ProductHandler) ListProducts(c *gin.Context) {
 		}
 	}
 
-	products, total, err := prod.service.ListProducts(limit, page, filters)
+	products, total, err := h.service.ListProducts(limit, page, filters)
 	if err != nil {
 		logger.L().Error(
 			"failed to list products",
@@ -101,7 +101,7 @@ func (prod *ProductHandler) ListProducts(c *gin.Context) {
 }
 
 // GetProduct handles GET /products/:id requests.
-func (prod *ProductHandler) GetProduct(c *gin.Context) {
+func (h *ProductHandler) GetProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -116,7 +116,7 @@ func (prod *ProductHandler) GetProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := prod.service.GetProductByID(id)
+	product, err := h.service.GetProductByID(id)
 	if err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
@@ -138,7 +138,7 @@ func (prod *ProductHandler) GetProduct(c *gin.Context) {
 }
 
 // GetProductBySlug handles GET /products/slug/:slug requests.
-func (prod *ProductHandler) GetProductBySlug(c *gin.Context) {
+func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
 
@@ -148,7 +148,7 @@ func (prod *ProductHandler) GetProductBySlug(c *gin.Context) {
 		return
 	}
 
-	product, err := prod.service.GetProductBySlug(slug)
+	product, err := h.service.GetProductBySlug(slug)
 	if err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
@@ -170,7 +170,7 @@ func (prod *ProductHandler) GetProductBySlug(c *gin.Context) {
 }
 
 // CreateProduct handles POST /products requests.
-func (prod *ProductHandler) CreateProduct(c *gin.Context) {
+func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
 	var req createProductRequest
@@ -192,7 +192,7 @@ func (prod *ProductHandler) CreateProduct(c *gin.Context) {
 		IsActive:   req.IsActive,
 	}
 
-	if err := prod.service.CreateProduct(product); err != nil {
+	if err := h.service.CreateProduct(product); err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to create product",
@@ -214,7 +214,7 @@ func (prod *ProductHandler) CreateProduct(c *gin.Context) {
 }
 
 // UpdateProduct handles PUT /products/:id requests.
-func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
+func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -240,7 +240,7 @@ func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	existing, err := prod.service.GetProductByID(id)
+	existing, err := h.service.GetProductByID(id)
 	if err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
@@ -269,7 +269,7 @@ func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
 		existing.IsActive = *req.IsActive
 	}
 
-	if err := prod.service.UpdateProduct(id, existing); err != nil {
+	if err := h.service.UpdateProduct(id, existing); err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to update product",
@@ -281,7 +281,7 @@ func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	updatedProduct, _ := prod.service.GetProductByID(id)
+	updatedProduct, _ := h.service.GetProductByID(id)
 	logger.L().Info(
 		"product updated successfully",
 		zap.Int("id", id),
@@ -291,7 +291,7 @@ func (prod *ProductHandler) UpdateProduct(c *gin.Context) {
 }
 
 // DeleteProduct handles DELETE /products/:id requests.
-func (prod *ProductHandler) DeleteProduct(c *gin.Context) {
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
 
@@ -306,7 +306,7 @@ func (prod *ProductHandler) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	if err := prod.service.DeleteProduct(id); err != nil {
+	if err := h.service.DeleteProduct(id); err != nil {
 		code, status := CategoryHTTPCode(err)
 		logger.L().Error(
 			"failed to delete product",
