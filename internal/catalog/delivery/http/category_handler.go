@@ -2,9 +2,13 @@ package http
 
 import (
 	"e-commerce-go/internal/catalog/domain"
+	"e-commerce-go/internal/shared/response"
+	"e-commerce-go/pkg/logger"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type CategoryHandler struct {
@@ -31,24 +35,24 @@ func NewCategoryHandler(service domain.CategoryService) *CategoryHandler {
 }
 
 // RegisterCategoryRoutes registers category endpoints in the Gin router.
-func (cate *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
+func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
 		category := v1.Group("/categories")
 		{
-			category.GET("", cate.ListCategories)
-			category.GET("/:id", cate.GetCategory)
-			category.GET("/slug/:slug", cate.GetCategoryBySlug)
-			category.POST("", cate.CreateCategory)
-			category.PUT("/:id", cate.UpdateCategory)
-			category.DELETE("/:id", cate.DeleteCategory)
+			category.GET("", h.ListCategories)
+			category.GET("/:id", h.GetCategory)
+			category.GET("/slug/:slug", h.GetCategoryBySlug)
+			category.POST("", h.CreateCategory)
+			category.PUT("/:id", h.UpdateCategory)
+			category.DELETE("/:id", h.DeleteCategory)
 		}
 	}
 }
 
 // ListCategories handles GET /categories with pagination and filters.
-func (cate *CategoryHandler) ListCategories(c *gin.Context) {
-	//reqID := c.Writer.Header().Get("X-Request-ID")
+func (h *CategoryHandler) ListCategories(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page <= 0 {
 		page = 1
@@ -59,31 +63,61 @@ func (cate *CategoryHandler) ListCategories(c *gin.Context) {
 		limit = 10
 	}
 
-	//	filter := make(map[string]interface{})
-	//	if cate
+	filters := make(map[string]interface{})
+	if parentID := c.Query("parent_id"); parentID != "" {
+		if parID, err := strconv.Atoi(parentID); err == nil {
+			filters["parent_id = ?"] = parID
+		}
+	}
+	if isActive := c.Query("is_active"); isActive != "" {
+		if active, err := strconv.ParseBool(isActive); err == nil {
+			filters["is_active = ?"] = active
+		}
+	}
+
+	category, total, err := h.service.ListCategories(limit, page, filters)
+	if err != nil {
+		logger.L().Error(
+			"failed to list categories",
+			zap.Error(err),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list categories"))
+		return
+	}
+
+	logger.L().Info(
+		"categories listed successfully",
+		zap.Int("page", page),
+		zap.Int("limit", limit),
+		zap.Int64("total", total),
+		zap.String("request_id", reqID),
+	)
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(category, total, page, limit, c.Request.URL.Path))
+
 }
 
 // GetCategory handles GET /categories/:id request.
-func (cate *CategoryHandler) GetCategory(c *gin.Context) {
+func (h *CategoryHandler) GetCategory(c *gin.Context) {
 
 }
 
 // GetCategoryBySlug handles GET /categories/slug/:slug request.
-func (cate *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
+func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 
 }
 
 // CreateCategory handles POST /categories request
-func (cate *CategoryHandler) CreateCategory(c *gin.Context) {
+func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 }
 
 // UpdateCategory handler PUT /categories/:id request.
-func (cate *CategoryHandler) UpdateCategory(c *gin.Context) {
+func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 
 }
 
 // DeleteCategory handles DELETE /categories/:id requests.
-func (cate *CategoryHandler) DeleteCategory(c *gin.Context) {
+func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 
 }
