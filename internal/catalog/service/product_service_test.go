@@ -339,7 +339,8 @@ func TestProductService_ListProducts(t *testing.T) {
 			tt.setupMock(mr)
 
 			svc := service.NewProductService(mr)
-			products, total, err := svc.ListProducts(tt.limit, tt.page, tt.filters)
+			pagination := domain.NewPagination(tt.page, tt.limit)
+			products, total, err := svc.ListProducts(pagination, tt.filters)
 
 			if tt.expectError {
 				assert.Error(t, err)

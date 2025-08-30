@@ -79,8 +79,8 @@ func (m *mockService) DeleteProduct(id int) error {
 	return args.Error(0)
 }
 
-func (m *mockService) ListProducts(limit, page int, filters map[string]interface{}) ([]domain.Product, int64, error) {
-	args := m.Called(limit, page, filters)
+func (m *mockService) ListProducts(p domain.Pagination, filters map[string]interface{}) ([]domain.Product, int64, error) {
+	args := m.Called(p, filters)
 	return args.Get(0).([]domain.Product), args.Get(1).(int64), args.Error(2)
 }
 
