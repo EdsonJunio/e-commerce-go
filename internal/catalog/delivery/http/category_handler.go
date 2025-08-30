@@ -54,14 +54,8 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page <= 0 {
-		page = 1
-	}
-
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
+	pagination := domain.NewPagination(page, limit)
 
 	filters := make(map[string]interface{})
 	if parentID := c.Query("parent_id"); parentID != "" {
@@ -75,10 +69,9 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		}
 	}
 
-	category, total, err := h.service.ListCategories(limit, page, filters)
+	categories, total, err := h.service.ListCategories(pagination, filters)
 	if err != nil {
-		logger.L().Error(
-			"failed to list categories",
+		logger.L().Error("failed to list categories",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
@@ -86,15 +79,7 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		return
 	}
 
-	logger.L().Info(
-		"categories listed successfully",
-		zap.Int("page", page),
-		zap.Int("limit", limit),
-		zap.Int64("total", total),
-		zap.String("request_id", reqID),
-	)
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(category, total, page, limit, c.Request.URL.Path))
-
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(categories, total, pagination.Page, pagination.Limit, c.Request.URL.Path))
 }
 
 // GetCategory handles GET /categories/:id request.
