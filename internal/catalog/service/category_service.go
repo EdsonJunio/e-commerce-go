@@ -16,24 +16,16 @@ func NewCategoryService(repo domain.CategoryRepository) domain.CategoryService {
 	return &categoryService{repo: repo}
 }
 
-func (s *categoryService) ListCategories(limit, page int, filters map[string]interface{}) ([]domain.Category, int64, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-	if page <= 0 {
-		page = 1
-	}
-	offset := (page - 1) * limit
-
+func (s *categoryService) ListCategories(p domain.Pagination, filters map[string]interface{}) ([]domain.Category, int64, error) {
 	logger.L().Info(
-		"listing products",
-		zap.Int("limit", limit),
-		zap.Int("page", page),
-		zap.Int("offset", offset),
+		"listing categories",
+		zap.Int("limit", p.Limit),
+		zap.Int("page", p.Page),
+		zap.Int("offset", p.Offset),
 		zap.Any("filters", filters),
 	)
 
-	return s.repo.List(limit, offset, filters)
+	return s.repo.List(p.Limit, p.Offset, filters)
 }
 
 func (s categoryService) GetCategoryByID(id int) (*domain.Category, error) {

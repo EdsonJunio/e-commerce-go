@@ -19,24 +19,16 @@ func NewProductService(repo domain.ProductRepository) domain.ProductService {
 }
 
 // ListProducts returns a paginated list of products with optional filters.
-func (s *productService) ListProducts(limit, page int, filters map[string]interface{}) ([]domain.Product, int64, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-	if page <= 0 {
-		page = 1
-	}
-	offset := (page - 1) * limit
-
+func (s *productService) ListProducts(p domain.Pagination, filters map[string]interface{}) ([]domain.Product, int64, error) {
 	logger.L().Info(
 		"listing products",
-		zap.Int("limit", limit),
-		zap.Int("page", page),
-		zap.Int("offset", offset),
+		zap.Int("limit", p.Limit),
+		zap.Int("page", p.Page),
+		zap.Int("offset", p.Offset),
 		zap.Any("filters", filters),
 	)
 
-	return s.repo.List(limit, offset, filters)
+	return s.repo.List(p.Limit, p.Offset, filters)
 }
 
 // GetProductByID retrieves a product by ID.

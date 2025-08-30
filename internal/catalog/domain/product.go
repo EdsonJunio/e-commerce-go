@@ -32,7 +32,7 @@ type ProductRepository interface {
 
 // ProductService defines the business logic contract for Product.
 type ProductService interface {
-	ListProducts(limit, page int, filters map[string]interface{}) ([]Product, int64, error)
+	ListProducts(p Pagination, filters map[string]interface{}) ([]Product, int64, error)
 	GetProductByID(id int) (*Product, error)
 	GetProductBySlug(slug string) (*Product, error)
 	CreateProduct(product *Product) error

@@ -58,14 +58,8 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page <= 0 {
-		page = 1
-	}
-
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
+	pagination := domain.NewPagination(page, limit)
 
 	filters := make(map[string]interface{})
 	if categoryID := c.Query("category_id"); categoryID != "" {
@@ -79,7 +73,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		}
 	}
 
-	products, total, err := h.service.ListProducts(limit, page, filters)
+	products, total, err := h.service.ListProducts(pagination, filters)
 	if err != nil {
 		logger.L().Error(
 			"failed to list products",
