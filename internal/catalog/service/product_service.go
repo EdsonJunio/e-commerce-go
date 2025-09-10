@@ -91,10 +91,10 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 		logger.L().Warn("missing product slug in CreateProduct")
 		return domain.ErrSlugReq
 	}
-	if product.PriceCents <= 0 {
+	if product.Description == "" {
 		logger.L().Warn(
-			"invalid product price in CreateProduct",
-			zap.Int64("price_cents", product.PriceCents),
+			"invalid product description in CreateProduct",
+			zap.String("description", product.Description),
 		)
 		return domain.ErrPriceInvalid
 	}
@@ -140,7 +140,7 @@ func (s *productService) UpdateProduct(id int, product *domain.Product) error {
 
 	existing.Name = product.Name
 	existing.Slug = product.Slug
-	existing.PriceCents = product.PriceCents
+	existing.Description = product.Description
 	existing.IsActive = product.IsActive
 	existing.CategoryID = product.CategoryID
 

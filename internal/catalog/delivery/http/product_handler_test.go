@@ -48,6 +48,10 @@ type mockService struct {
 	mock.Mock
 }
 
+func intPtr(i int) *int {
+	return &i
+}
+
 func (m *mockService) CreateProduct(product *domain.Product) error {
 	args := m.Called(product)
 	return args.Error(0)
@@ -107,7 +111,7 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			requestBody: gin.H{
 				"name":        "Test Product",
 				"slug":        "test-product",
-				"price_cents": 1000,
+				"description": "teste",
 				"category_id": 1,
 				"is_active":   true,
 			},
@@ -126,7 +130,7 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 				"id":          float64(1),
 				"name":        "Test Product",
 				"slug":        "test-product",
-				"price_cents": float64(1000),
+				"description": "teste",
 				"category_id": float64(1),
 				"is_active":   true,
 			},
@@ -137,11 +141,11 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			requestBody: gin.H{
 				"name": "",
 			},
-			setupMock:    func(ms *mockService) {},
+			setupMock: func(ms *mockService) {},
 			expectedCode: http.StatusBadRequest,
 			expectedBody: response.ErrorResponse{
 				Code:    "invalid_request",
-				Message: "Key: 'createProductRequest.CategoryID' Error:Field validation for 'CategoryID' failed on the 'required' tag\nKey: 'createProductRequest.Name' Error:Field validation for 'Name' failed on the 'required' tag\nKey: 'createProductRequest.PriceCents' Error:Field validation for 'PriceCents' failed on the 'required' tag\nKey: 'createProductRequest.Slug' Error:Field validation for 'Slug' failed on the 'required' tag",
+				Message: "Key: 'createProductRequest.CategoryID' Error:Field validation for 'CategoryID' failed on the 'required' tag\nKey: 'createProductRequest.Name' Error:Field validation for 'Name' failed on the 'required' tag\nKey: 'createProductRequest.Slug' Error:Field validation for 'Slug' failed on the 'required' tag",
 			},
 			isError: true,
 		},
@@ -172,7 +176,6 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 				message := responseBody["message"].(string)
 				assert.Contains(t, message, "CategoryID")
 				assert.Contains(t, message, "Name")
-				assert.Contains(t, message, "PriceCents")
 				assert.Contains(t, message, "Slug")
 			} else {
 				expected := make(map[string]interface{})
@@ -210,12 +213,12 @@ func TestProductHandler_GetProduct(t *testing.T) {
 			productID: "1",
 			setupMock: func(ms *mockService) {
 				ms.On("GetProductByID", 1).Return(&domain.Product{
-					ID:         1,
-					Name:       "Test Product",
-					Slug:       "test-product",
-					PriceCents: 1000,
-					CategoryID: 1,
-					IsActive:   true,
+					ID:          1,
+					Name:        "Test Product",
+					Slug:        "test-product",
+					Description: "teste",
+					CategoryID:  intPtr(1),
+					IsActive:    true,
 				}, nil)
 			},
 			expectedCode: http.StatusOK,
