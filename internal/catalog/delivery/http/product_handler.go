@@ -18,19 +18,19 @@ type ProductHandler struct {
 }
 
 type createProductRequest struct {
-	CategoryID int    `json:"category_id" binding:"required,min=1"`
-	Name       string `json:"name" binding:"required,min=3,max=255"`
-	Slug       string `json:"slug" binding:"required,min=3,max=255"`
-	PriceCents int64  `json:"price_cents" binding:"required,min=1"`
-	IsActive   bool   `json:"is_active"`
+	CategoryID  *int   `json:"category_id" binding:"required,min=1"`
+	Name        string `json:"name" binding:"required,min=3,max=255"`
+	Slug        string `json:"slug" binding:"required,min=3,max=255"`
+	Description string `json:"description"`
+	IsActive    bool   `json:"is_active"`
 }
 
 type updateProductRequest struct {
-	CategoryID *int    `json:"category_id,omitempty"`
-	Name       *string `json:"name,omitempty"`
-	Slug       *string `json:"slug,omitempty"`
-	PriceCents *int64  `json:"price_cents,omitempty"`
-	IsActive   *bool   `json:"is_active,omitempty"`
+	CategoryID  *int    `json:"category_id,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Slug        *string `json:"slug,omitempty"`
+	Description *string `json:"description,omitempty"`
+	IsActive    *bool   `json:"is_active,omitempty"`
 }
 
 // NewProductHandler returns a new ProductHandler with the given service.
@@ -179,11 +179,11 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	product := &domain.Product{
-		CategoryID: req.CategoryID,
-		Name:       strings.TrimSpace(req.Name),
-		Slug:       strings.TrimSpace(req.Slug),
-		PriceCents: req.PriceCents,
-		IsActive:   req.IsActive,
+		CategoryID:  req.CategoryID,
+		Name:        strings.TrimSpace(req.Name),
+		Slug:        strings.TrimSpace(req.Slug),
+		Description: req.Description,
+		IsActive:    req.IsActive,
 	}
 
 	if err := h.service.CreateProduct(product); err != nil {
@@ -248,7 +248,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	if req.CategoryID != nil {
-		existing.CategoryID = *req.CategoryID
+		existing.CategoryID = req.CategoryID
 	}
 	if req.Name != nil {
 		existing.Name = strings.TrimSpace(*req.Name)
@@ -256,8 +256,8 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	if req.Slug != nil {
 		existing.Slug = strings.TrimSpace(*req.Slug)
 	}
-	if req.PriceCents != nil {
-		existing.PriceCents = *req.PriceCents
+	if req.Description != nil {
+		existing.Description = *req.Description
 	}
 	if req.IsActive != nil {
 		existing.IsActive = *req.IsActive

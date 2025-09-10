@@ -7,11 +7,11 @@ GET {{baseUrl}}/products?page=1&limit=10
 Content-Type: application/json
 
 ### Get product by ID
-GET {{baseUrl}}/products/10
+GET {{baseUrl}}/products/2
 Content-Type: application/json
 
 ### Get product by slug
-GET {{baseUrl}}/products/slug/new-product
+GET {{baseUrl}}/products/slug/new-product55253
 Content-Type: application/json
 
 ### Create a new product
@@ -19,10 +19,10 @@ POST {{baseUrl}}/products
 Content-Type: application/json
 
 {
-  "category_id": 2,
-  "name": "New Product55253",
-  "slug": "new-product55253",
-  "price_cents": 19992,
+  "category_id": 1,
+  "name": "New Product5525dds",
+  "slug": "new-product5525dds",
+  "description": "teste2",
   "is_active": true
 }
 
@@ -32,12 +32,12 @@ Content-Type: application/json
 
 {
   "name": "Updated Product Name",
-  "price_cents": 24993322,
+  "description": "teste2",
   "is_active": false
 }
 
 ### Delete a product
-DELETE {{baseUrl}}/products/9
+DELETE {{baseUrl}}/products/4
 Content-Type: application/json
 
 ### Health check

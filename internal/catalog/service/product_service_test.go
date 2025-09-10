@@ -41,6 +41,11 @@ type mockRepository struct {
 	mock.Mock
 }
 
+// Helper function to create int pointers
+func intPtr(i int) *int {
+	return &i
+}
+
 func (m *mockRepository) Create(product *domain.Product) error {
 	args := m.Called(product)
 	return args.Error(0)
@@ -88,10 +93,10 @@ func TestProductService_CreateProduct(t *testing.T) {
 		{
 			name: "successful creation",
 			product: &domain.Product{
-				Name:       "Test Product",
-				Slug:       "test-product",
-				PriceCents: 1000,
-				CategoryID: 1,
+				Name:        "Test Product",
+				Slug:        "test-product",
+				Description: "test description",
+				CategoryID:  intPtr(1),
 			},
 			setupMock: func(mr *mockRepository) {
 				mr.On("FindBySlug", "test-product").Return((*domain.Product)(nil), nil)
@@ -102,9 +107,9 @@ func TestProductService_CreateProduct(t *testing.T) {
 		{
 			name: "empty name",
 			product: &domain.Product{
-				Name:       "",
-				Slug:       "test-product",
-				PriceCents: 1000,
+				Name:        "",
+				Slug:        "test-product",
+				Description: "teste",
 			},
 			setupMock:   func(mr *mockRepository) {},
 			expectError: true,
@@ -113,9 +118,9 @@ func TestProductService_CreateProduct(t *testing.T) {
 		{
 			name: "duplicate slug",
 			product: &domain.Product{
-				Name:       "Test Product",
-				Slug:       "existing-product",
-				PriceCents: 1000,
+				Name:        "Test Product",
+				Slug:        "existing-product",
+				Description: "teste",
 			},
 			setupMock: func(mr *mockRepository) {
 				existing := &domain.Product{ID: 1, Slug: "existing-product"}
@@ -208,29 +213,29 @@ func TestProductService_UpdateProduct(t *testing.T) {
 			name: "successful update",
 			id:   1,
 			product: &domain.Product{
-				Name:       "Updated Product",
-				Slug:       "updated-product",
-				PriceCents: 2000,
-				CategoryID: 2,
-				IsActive:   true,
+				Name:        "Updated Product",
+				Slug:        "updated-product",
+				Description: "updated description",
+				CategoryID:  intPtr(2),
+				IsActive:    true,
 			},
 			setupMock: func(mr *mockRepository) {
 				existing := &domain.Product{
-					ID:         1,
-					Name:       "Old Product",
-					Slug:       "old-product",
-					PriceCents: 1000,
-					CategoryID: 1,
-					IsActive:   false,
-					CreatedAt:  testTime,
+					ID:          1,
+					Name:        "Old Product",
+					Slug:        "old-product",
+					Description: "old description",
+					CategoryID:  intPtr(1),
+					IsActive:    false,
+					CreatedAt:   testTime,
 				}
 				mr.On("FindByID", 1).Return(existing, nil)
 				mr.On("Update", mock.MatchedBy(func(p *domain.Product) bool {
 					return p.ID == 1 &&
 						p.Name == "Updated Product" &&
 						p.Slug == "updated-product" &&
-						p.PriceCents == 2000 &&
-						p.CategoryID == 2 &&
+						p.Description == "updated description" &&
+						*p.CategoryID == 2 &&
 						p.IsActive == true &&
 						p.CreatedAt == testTime
 				})).Return(nil)

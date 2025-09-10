@@ -4,15 +4,15 @@ import "time"
 
 // Product represents the product aggregate persisted in the database.
 type Product struct {
-	ID         int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	CategoryID int        `gorm:"column:category_id;not null" json:"category_id"`
-	Name       string     `gorm:"column:name;not null" json:"name"`
-	Slug       string     `gorm:"column:slug;unique;not null" json:"slug"`
-	PriceCents int64      `gorm:"column:price_cents;not null" json:"price_cents"`
-	IsActive   bool       `gorm:"column:is_active;default:true" json:"is_active"`
-	CreatedAt  time.Time  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
-	UpdatedAt  time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
-	DeletedAt  *time.Time `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
+	ID          int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	Name        string     `gorm:"column:name;not null" json:"name"`
+	Slug        string     `gorm:"column:slug;unique;not null" json:"slug"`
+	Description string     `gorm:"column:description" json:"description"`
+	CategoryID  *int       `gorm:"column:category_id" json:"category_id"`
+	IsActive    bool       `gorm:"column:is_active;default:true" json:"is_active"`
+	CreatedAt   time.Time  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+	DeletedAt   *time.Time `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
 }
 
 // TableName sets the table name for GORM.

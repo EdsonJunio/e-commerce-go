@@ -62,3 +62,8 @@ yarn-error.log*
 
 # Arquivos de configuração local
 *.local
+
+# Ignorar histórico do GoLand
+*.history*
+*/terminal/history/*
+
