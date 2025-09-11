@@ -22,7 +22,7 @@ func (Category) TableName() string { return "categories" }
 // CategoryRepository defines the DB acess contract for Category
 type CategoryRepository interface {
 	List(limit, offset int, filters map[string]interface{}) ([]Category, int64, error)
-	//FindByID(id int) (*Category, error)
+	FindByID(id int) (*Category, error)
 	//FindBySlug(slug string) (*Category, error)
 	//Create(category *Category) error
 	//Update(category *Category) error
@@ -32,7 +32,7 @@ type CategoryRepository interface {
 // CategoryService defines the business logic contract for Category
 type CategoryService interface {
 	ListCategories(p Pagination, filters map[string]interface{}) ([]Category, int64, error)
-	//GetCategoryByID(id int) (*Category, error)
+	GetCategoryByID(id int) (*Category, error)
 	//GetCategoryBySlug(slug string) (*Category, error)
 	//CreateCategory(category *Category) error
 	//UpdateCategory(id int, category *Category) error
