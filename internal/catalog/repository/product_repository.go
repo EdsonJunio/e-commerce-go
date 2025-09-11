@@ -60,7 +60,7 @@ func (r *productRepository) FindByID(id int) (*domain.Product, error) {
 	err := r.db.First(&product, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.L().Info("product not found by ID", zap.Int("id", id))
-		return nil, domain.ErrNotFound
+		return nil, domain.ErrProductNotFound
 	}
 	if err != nil {
 		logger.L().Error(
@@ -104,7 +104,7 @@ func (r *productRepository) Create(product *domain.Product) error {
 				zap.String("slug", product.Slug),
 				zap.Error(err),
 			)
-			return domain.ErrSlugExists
+			return domain.ErrProductSlugRequired
 		}
 		logger.L().Error(
 			"failed to create product in database",
@@ -128,7 +128,7 @@ func (r *productRepository) Update(product *domain.Product) error {
 				zap.String("slug", product.Slug),
 				zap.Error(err),
 			)
-			return domain.ErrSlugExists
+			return domain.ErrProductSlugRequired
 		}
 		logger.L().Error(
 			"failed to update product",
@@ -154,7 +154,7 @@ func (r *productRepository) Delete(id int) error {
 	}
 	if res.RowsAffected == 0 {
 		logger.L().Info("product not found to delete", zap.Int("id", id))
-		return domain.ErrNotFound
+		return domain.ErrProductNotFound
 	}
 	return nil
 }

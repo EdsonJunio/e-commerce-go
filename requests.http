@@ -27,7 +27,7 @@ Content-Type: application/json
 }
 
 ### Update a product (partial update)
-PUT {{baseUrl}}/products/10
+PUT {{baseUrl}}/products/2
 Content-Type: application/json
 
 {
@@ -48,6 +48,10 @@ Content-Type: application/json
 
 ### List all categories
 GET {{baseUrl}}/categories?page=1&limit=10
+Content-Type: application/json
+
+### Get category by ID
+GET {{baseUrl}}/categories/2
 Content-Type: application/json
 
 

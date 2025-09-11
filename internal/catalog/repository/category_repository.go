@@ -3,6 +3,7 @@ package repository
 import (
 	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/pkg/logger"
+	"errors"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -50,8 +51,24 @@ func (r *categoryRepository) List(limit, offset int, filters map[string]interfac
 }
 
 func (r categoryRepository) FindByID(id int) (*domain.Category, error) {
-	//TODO implement me
-	panic("implement me")
+	var category domain.Category
+	err := r.db.First(&category, id).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.L().Info("category not found by ID", zap.Int("id", id))
+		return nil, domain.ErrCategoryNotFound
+	}
+
+	if err != nil {
+		logger.L().Error(
+			"failed to fetch category by ID",
+			zap.Int("id", id),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return &category, nil
 }
 
 func (r categoryRepository) FindBySlug(slug string) (*domain.Category, error) {

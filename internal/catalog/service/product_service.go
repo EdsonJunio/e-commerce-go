@@ -35,7 +35,7 @@ func (s *productService) ListProducts(p domain.Pagination, filters map[string]in
 func (s *productService) GetProductByID(id int) (*domain.Product, error) {
 	if id <= 0 {
 		logger.L().Warn("invalid product ID in GetProductByID", zap.Int("id", id))
-		return nil, domain.ErrInvalidID
+		return nil, domain.ErrProductNotFound
 	}
 
 	product, err := s.repo.FindByID(id)
@@ -50,7 +50,7 @@ func (s *productService) GetProductByID(id int) (*domain.Product, error) {
 
 	if product == nil {
 		logger.L().Info("product not found by ID", zap.Int("id", id))
-		return nil, domain.ErrNotFound
+		return nil, domain.ErrProductNotFound
 	}
 
 	return product, nil
@@ -60,7 +60,7 @@ func (s *productService) GetProductByID(id int) (*domain.Product, error) {
 func (s *productService) GetProductBySlug(slug string) (*domain.Product, error) {
 	if slug == "" {
 		logger.L().Warn("empty slug in GetProductBySlug")
-		return nil, domain.ErrSlugIsReq
+		return nil, domain.ErrProductDescriptionRequired
 	}
 
 	product, err := s.repo.FindBySlug(slug)
@@ -75,7 +75,7 @@ func (s *productService) GetProductBySlug(slug string) (*domain.Product, error) 
 
 	if product == nil {
 		logger.L().Info("product not found by slug", zap.String("slug", slug))
-		return nil, domain.ErrNotFound
+		return nil, domain.ErrProductNotFound
 	}
 
 	return product, nil
@@ -85,18 +85,18 @@ func (s *productService) GetProductBySlug(slug string) (*domain.Product, error) 
 func (s *productService) CreateProduct(product *domain.Product) error {
 	if product.Name == "" {
 		logger.L().Warn("missing product name in CreateProduct")
-		return domain.ErrNameReq
+		return domain.ErrProductNameRequired
 	}
 	if product.Slug == "" {
 		logger.L().Warn("missing product slug in CreateProduct")
-		return domain.ErrSlugReq
+		return domain.ErrProductSlugRequired
 	}
 	if product.Description == "" {
 		logger.L().Warn(
 			"invalid product description in CreateProduct",
 			zap.String("description", product.Description),
 		)
-		return domain.ErrPriceInvalid
+		return domain.ErrInvalidProductPrice
 	}
 
 	existing, err := s.repo.FindBySlug(product.Slug)
@@ -110,7 +110,7 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 	}
 	if existing != nil {
 		logger.L().Warn("duplicate product slug", zap.String("slug", product.Slug))
-		return domain.ErrSlugExists
+		return domain.ErrProductSlugExists
 	}
 
 	logger.L().Info("creating new product", zap.String("slug", product.Slug))
@@ -121,7 +121,7 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 func (s *productService) UpdateProduct(id int, product *domain.Product) error {
 	if id <= 0 {
 		logger.L().Warn("invalid product ID in UpdateProduct", zap.Int("id", id))
-		return domain.ErrInvalidID
+		return domain.ErrInvalidProductID
 	}
 
 	existing, err := s.repo.FindByID(id)
@@ -135,7 +135,7 @@ func (s *productService) UpdateProduct(id int, product *domain.Product) error {
 	}
 	if existing == nil {
 		logger.L().Info("product not found for update", zap.Int("id", id))
-		return domain.ErrNotFound
+		return domain.ErrProductNotFound
 	}
 
 	existing.Name = product.Name
@@ -152,7 +152,7 @@ func (s *productService) UpdateProduct(id int, product *domain.Product) error {
 func (s *productService) DeleteProduct(id int) error {
 	if id <= 0 {
 		logger.L().Warn("invalid product ID in DeleteProduct", zap.Int("id", id))
-		return domain.ErrInvalidID
+		return domain.ErrInvalidProductID
 	}
 
 	existing, err := s.repo.FindByID(id)
@@ -166,7 +166,7 @@ func (s *productService) DeleteProduct(id int) error {
 	}
 	if existing == nil {
 		logger.L().Info("product not found for deletion", zap.Int("id", id))
-		return domain.ErrNotFound
+		return domain.ErrProductNotFound
 	}
 
 	logger.L().Info("deleting product", zap.Int("id", id))

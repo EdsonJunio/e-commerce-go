@@ -29,8 +29,27 @@ func (s *categoryService) ListCategories(p domain.Pagination, filters map[string
 }
 
 func (s categoryService) GetCategoryByID(id int) (*domain.Category, error) {
-	//TODO implement me
-	panic("implement me")
+	if id <= 0 {
+		logger.L().Warn("invalid category ID in GetCategoryByID", zap.Int("id", id))
+		return nil, domain.ErrInvalidCategoryID
+	}
+
+	category, err := s.repo.FindByID(id)
+	if err != nil {
+		logger.L().Error(
+			"failed to fetch category by ID",
+			zap.Int("id", id),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	if category == nil {
+		logger.L().Info("category not found by ID", zap.Int("id", id))
+		return nil, domain.ErrCategoryNotFound
+	}
+
+	return category, nil
 }
 
 func (c categoryService) GetCategoryBySlug(slug string) (*domain.Category, error) {

@@ -84,7 +84,39 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 
 // GetCategory handles GET /categories/:id request.
 func (h *CategoryHandler) GetCategory(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
+	idParam := c.Param("id")
 
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		logger.L().Warn(
+			"ID de category inválido",
+			zap.String("id_param", idParam),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do category inválido"))
+		return
+	}
+
+	category, err := h.service.GetCategoryByID(id)
+	if err != nil {
+		code, status := CategoryHTTPCode(err)
+		logger.L().Error(
+			"failed to get product by ID",
+			zap.Error(err),
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+		return
+	}
+
+	logger.L().Info(
+		"category retrieved by ID",
+		zap.Int("id", id),
+		zap.String("request_id", reqID),
+	)
+	c.JSON(http.StatusOK, category)
 }
 
 // GetCategoryBySlug handles GET /categories/slug/:slug request.

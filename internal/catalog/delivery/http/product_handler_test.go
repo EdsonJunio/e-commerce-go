@@ -141,7 +141,7 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			requestBody: gin.H{
 				"name": "",
 			},
-			setupMock: func(ms *mockService) {},
+			setupMock:    func(ms *mockService) {},
 			expectedCode: http.StatusBadRequest,
 			expectedBody: response.ErrorResponse{
 				Code:    "invalid_request",
@@ -235,7 +235,7 @@ func TestProductHandler_GetProduct(t *testing.T) {
 			name:      "product not found",
 			productID: "999",
 			setupMock: func(ms *mockService) {
-				ms.On("GetProductByID", 999).Return((*domain.Product)(nil), domain.ErrNotFound)
+				ms.On("GetProductByID", 999).Return((*domain.Product)(nil), domain.ErrProductNotFound)
 			},
 			expectedCode: http.StatusNotFound,
 			expectedBody: response.ErrorResponse{
