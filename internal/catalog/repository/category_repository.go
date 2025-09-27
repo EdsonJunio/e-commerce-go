@@ -2,10 +2,8 @@ package repository
 
 import (
 	"e-commerce-go/internal/catalog/domain"
-	"e-commerce-go/pkg/logger"
 	"errors"
 
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -30,20 +28,10 @@ func (r *categoryRepository) List(limit, offset int, filters map[string]interfac
 	}
 
 	if err := tx.Count(&total).Error; err != nil {
-		logger.L().Error(
-			"failed to count categories",
-			zap.Error(err),
-			zap.Any("filters", filters),
-		)
 		return nil, 0, err
 	}
 
 	if err := tx.Offset(offset).Limit(limit).Find(&categories).Error; err != nil {
-		logger.L().Error(
-			"failed to list categories",
-			zap.Error(err),
-			zap.Any("filters", filters),
-		)
 		return nil, 0, err
 	}
 
@@ -55,16 +43,10 @@ func (r categoryRepository) FindByID(id int) (*domain.Category, error) {
 	err := r.db.First(&category, id).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		logger.L().Info("category not found by ID", zap.Int("id", id))
 		return nil, domain.ErrCategoryNotFound
 	}
 
 	if err != nil {
-		logger.L().Error(
-			"failed to fetch category by ID",
-			zap.Int("id", id),
-			zap.Error(err),
-		)
 		return nil, err
 	}
 
@@ -72,8 +54,15 @@ func (r categoryRepository) FindByID(id int) (*domain.Category, error) {
 }
 
 func (r categoryRepository) FindBySlug(slug string) (*domain.Category, error) {
-	//TODO implement me
-	panic("implement me")
+	var category domain.Category
+	err := r.db.Where("slug = ?", slug).First(&category).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &category, nil
 }
 
 func (r categoryRepository) Create(category *domain.Category) error {
@@ -86,7 +75,7 @@ func (r categoryRepository) Update(category *domain.Category) error {
 	panic("implement me")
 }
 
-func (c categoryRepository) Delete(id int) error {
+func (r categoryRepository) Delete(id int) error {
 	//TODO implement me
 	panic("implement me")
 }

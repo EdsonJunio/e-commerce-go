@@ -1,6 +1,7 @@
 package http
 
 import (
+	"e-commerce-go/internal/shared/transport"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,12 +76,18 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 
 	products, total, err := h.service.ListProducts(pagination, filters)
 	if err != nil {
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to list products",
-			zap.Error(err),
+			err,
+			zap.Int("page", page),
+			zap.Int("limit", limit),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list products"))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -102,24 +109,27 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		logger.L().Warn(
-			"ID de produto inválido",
+			"invalid ID in GetProduct",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do produto inválido"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
 		return
 	}
 
 	product, err := h.service.GetProductByID(id)
 	if err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to get product by ID",
-			zap.Error(err),
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -137,21 +147,27 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
 	if slug == "" {
-		logger.L().Warn("empty slug in GetProductBySlug", zap.String("request_id", reqID))
+		logger.L().Warn(
+			"empty slug in GetProductBySlug",
+			zap.String("request_id", reqID),
+		)
 		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "product slug is required"))
 		return
 	}
 
 	product, err := h.service.GetProductBySlug(slug)
 	if err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to get product by slug",
-			zap.Error(err),
+			err,
 			zap.String("slug", slug),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -187,14 +203,17 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	if err := h.service.CreateProduct(product); err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to create product",
-			zap.Error(err),
+			err,
 			zap.String("slug", req.Slug),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -236,14 +255,17 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 
 	existing, err := h.service.GetProductByID(id)
 	if err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to find product in UpdateProduct",
-			zap.Error(err),
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -264,14 +286,17 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	if err := h.service.UpdateProduct(id, existing); err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to update product",
-			zap.Error(err),
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -301,14 +326,17 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	}
 
 	if err := h.service.DeleteProduct(id); err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
 			"failed to delete product",
-			zap.Error(err),
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 

@@ -54,4 +54,8 @@ Content-Type: application/json
 GET {{baseUrl}}/categories/2
 Content-Type: application/json
 
+### Get category by slug
+GET {{baseUrl}}/categories/slug/teste1
+Content-Type: application/json
+
 

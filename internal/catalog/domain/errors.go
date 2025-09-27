@@ -13,9 +13,10 @@ var (
 )
 
 var (
-	ErrInvalidCategoryID    = errors.New("invalid category ID")
-	ErrCategoryNotFound     = errors.New("category not found")
-	ErrCategoryNameRequired = errors.New("category name is required")
-	ErrCategorySlugRequired = errors.New("category slug is required")
-	ErrCategorySlugExists   = errors.New("category with this slug already exists")
+	ErrInvalidCategoryID           = errors.New("invalid category ID")
+	ErrCategoryNotFound            = errors.New("category not found")
+	ErrCategoryNameRequired        = errors.New("category name is required")
+	ErrCategorySlugRequired        = errors.New("category slug is required")
+	ErrCategorySlugExists          = errors.New("category with this slug already exists")
+	ErrCategoryDescriptionRequired = errors.New("slug is required")
 )
