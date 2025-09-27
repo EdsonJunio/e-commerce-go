@@ -7,6 +7,7 @@ import (
 	"e-commerce-go/pkg/logger"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -17,10 +18,11 @@ type CategoryHandler struct {
 }
 
 type createCategoryRequest struct {
-	Name     string `json:"name" binding:"required,min=3,max=255"`
-	Slug     string `json:"slug" binding:"required,min=3,max=255"`
-	ParentID *uint  `json:"parent_id" binding:"omitempty,gt=0"`
-	IsActive bool   `json:"is_active"`
+	Name        string `json:"name" binding:"required,min=3,max=255"`
+	Slug        string `json:"slug" binding:"required,min=3,max=255"`
+	ParentID    *uint  `json:"parent_id" binding:"omitempty,gt=0"`
+	IsActive    bool   `json:"is_active"`
+	Description string `json:"description"`
 }
 
 type updateCategoryRequest struct {
@@ -159,7 +161,42 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 
 // CreateCategory handles POST /categories request
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
 
+	var req createCategoryRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.L().Warn(
+			"invalid request in CreateCategory",
+			zap.Error(err),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
+		return
+	}
+
+	category := &domain.Category{
+		Name:        strings.TrimSpace(req.Name),
+		Slug:        strings.TrimSpace(req.Slug),
+		IsActive:    req.IsActive,
+		ParentID:    req.ParentID
+		Description: req.Description,
+	}
+
+	if err := h.service.CreateCategory(category); err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to create category",
+			err,
+			zap.String("slug", req.Slug),
+			zap.String("request_id", reqID),
+		)
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		return
+	}
 }
 
 // UpdateCategory handler PUT /categories/:id request.

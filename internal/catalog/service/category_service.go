@@ -52,8 +52,18 @@ func (s categoryService) GetCategoryBySlug(slug string) (*domain.Category, error
 }
 
 func (s categoryService) CreateCategory(category *domain.Category) error {
-	//TODO implement me
-	panic("implement me")
+	if category.Name == "" {
+		return domain.ErrCategoryNameRequired
+	}
+	if category.Slug == "" {
+		return domain.ErrCategorySlugRequired
+	}
+	if category.Description == "" {
+		return domain.ErrCategoryDescriptionRequired
+	}
+
+	return s.repo.Create(category)
+
 }
 
 func (s categoryService) UpdateCategory(id int, category *domain.Category) error {
