@@ -3,6 +3,7 @@ package http
 import (
 	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/internal/shared/response"
+	"e-commerce-go/internal/shared/transport"
 	"e-commerce-go/pkg/logger"
 	"net/http"
 	"strconv"
@@ -71,11 +72,16 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 
 	categories, total, err := h.service.ListCategories(pagination, filters)
 	if err != nil {
-		logger.L().Error("failed to list categories",
-			zap.Error(err),
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to list categories",
+			err,
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("service_error", "failed to list categories"))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -90,24 +96,27 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		logger.L().Warn(
-			"ID de category inválido",
+			"invalid category ID",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "ID do category inválido"))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "category ID is invalid"))
 		return
 	}
 
 	category, err := h.service.GetCategoryByID(id)
 	if err != nil {
-		code, status := CategoryHTTPCode(err)
-		logger.L().Error(
-			"failed to get product by ID",
-			zap.Error(err),
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to get category by ID",
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(status, response.NewErrorResponse(code, err.Error()))
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
 
@@ -121,7 +130,31 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 
 // GetCategoryBySlug handles GET /categories/slug/:slug request.
 func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
+	slug := c.Param("slug")
 
+	if slug == "" {
+		logger.L().Warn("empty slug in GetCategoryBySlug", zap.String("request_id", reqID))
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "category slug is required"))
+		return
+	}
+
+	categorySlug, err := h.service.GetCategoryBySlug(slug)
+	if err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(mapping,
+			"failed to get category",
+			err,
+			zap.String("slug", slug),
+			zap.String("request_id", reqID),
+		)
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, categorySlug)
 }
 
 // CreateCategory handles POST /categories request

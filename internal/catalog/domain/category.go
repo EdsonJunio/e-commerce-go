@@ -23,7 +23,7 @@ func (Category) TableName() string { return "categories" }
 type CategoryRepository interface {
 	List(limit, offset int, filters map[string]interface{}) ([]Category, int64, error)
 	FindByID(id int) (*Category, error)
-	//FindBySlug(slug string) (*Category, error)
+	FindBySlug(slug string) (*Category, error)
 	//Create(category *Category) error
 	//Update(category *Category) error
 	//Delete(id int) error
@@ -33,7 +33,7 @@ type CategoryRepository interface {
 type CategoryService interface {
 	ListCategories(p Pagination, filters map[string]interface{}) ([]Category, int64, error)
 	GetCategoryByID(id int) (*Category, error)
-	//GetCategoryBySlug(slug string) (*Category, error)
+	GetCategoryBySlug(slug string) (*Category, error)
 	//CreateCategory(category *Category) error
 	//UpdateCategory(id int, category *Category) error
 	//DeleteCategory(id int) error
