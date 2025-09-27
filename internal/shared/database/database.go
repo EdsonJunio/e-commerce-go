@@ -20,12 +20,17 @@ import (
 func ConnectDB() (*gorm.DB, error) {
 	cfg := config.Load()
 
+	host := cfg.Database.Host
+	if os.Getenv("APP_ENV") == "local" {
+		host = "127.0.0.1"
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Database.Host,
+		host,
 		cfg.Database.Port,
 		cfg.Database.User,
 		cfg.Database.Password,
@@ -33,10 +38,9 @@ func ConnectDB() (*gorm.DB, error) {
 		cfg.Database.SSLMode,
 	)
 
-	// Masked DSN (without password) for safe logging.
 	masked := fmt.Sprintf(
 		"host=%s port=%s user=%s dbname=%s sslmode=%s",
-		cfg.Database.Host,
+		host,
 		cfg.Database.Port,
 		cfg.Database.User,
 		cfg.Database.Name,

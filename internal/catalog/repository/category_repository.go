@@ -66,8 +66,14 @@ func (r categoryRepository) FindBySlug(slug string) (*domain.Category, error) {
 }
 
 func (r categoryRepository) Create(category *domain.Category) error {
-	//TODO implement me
-	panic("implement me")
+	err := r.db.Create(category).Error
+	if err != nil {
+		if isUniqueViolation(err) {
+			return domain.ErrCategorySlugRequired
+		}
+		return err
+	}
+	return nil
 }
 
 func (r categoryRepository) Update(category *domain.Category) error {

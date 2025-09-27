@@ -7,11 +7,11 @@ GET {{baseUrl}}/products?page=1&limit=10
 Content-Type: application/json
 
 ### Get product by ID
-GET {{baseUrl}}/products/2
+GET {{baseUrl}}/products/1
 Content-Type: application/json
 
 ### Get product by slug
-GET {{baseUrl}}/products/slug/new-product55253
+GET {{baseUrl}}/products/slug/new-product5525dds
 Content-Type: application/json
 
 ### Create a new product
@@ -20,8 +20,8 @@ Content-Type: application/json
 
 {
   "category_id": 1,
-  "name": "New Product5525dds",
-  "slug": "new-product5525dds",
+  "name": "New Product5525ddss",
+  "slug": "new-product5525ddss",
   "description": "teste2",
   "is_active": true
 }
@@ -51,11 +51,24 @@ GET {{baseUrl}}/categories?page=1&limit=10
 Content-Type: application/json
 
 ### Get category by ID
-GET {{baseUrl}}/categories/2
+GET {{baseUrl}}/categories/1
 Content-Type: application/json
 
 ### Get category by slug
 GET {{baseUrl}}/categories/slug/teste1
 Content-Type: application/json
+
+
+### Create a new Category
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "Name": "teste1",
+  "slug": "New",
+  "description": "teste1",
+  "is_active": true,
+  "parent_id":2
+}
 
 
