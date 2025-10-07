@@ -1,6 +1,73 @@
 # Base URL
 @baseUrl = http://localhost:8080/api/v1
 
+#########################################################
+# Category Endpoints
+#########################################################
+
+### List all categories (with pagination)
+# Optional query params: page, limit, parent_id, is_active
+GET {{baseUrl}}/categories?page=1&limit=10
+Content-Type: application/json
+
+### Get category by ID
+GET {{baseUrl}}/categories/2
+Content-Type: application/json
+
+### Get category by slug
+GET {{baseUrl}}/categories/slug/electronics
+Content-Type: application/json
+
+### Create a sub-category (with parent)
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "Laptops",
+  "slug": "laptops",
+  "description": "Laptop computers and accessories",
+  "is_active": true,
+  "parent_id": 1
+}
+
+### Update a category (partial update)
+# Only include fields that need to be updated
+PUT {{baseUrl}}/categories/2
+Content-Type: application/json
+
+{
+  "name": "Laptops & Notebooks",
+  "description": "Laptops, notebooks and accessories"
+}
+
+### Toggle category active status
+PUT {{baseUrl}}/categories/2
+Content-Type: application/json
+
+{
+  "is_active": false
+}
+
+### Change category parent
+PUT {{baseUrl}}/categories/2
+Content-Type: application/json
+
+{
+  "parent_id": 1
+}
+
+### Delete a category
+DELETE {{baseUrl}}/categories/3
+Content-Type: application/json
+
+### Try to delete a category with subcategories (should fail)
+DELETE {{baseUrl}}/categories/1
+Content-Type: application/json
+
+#########################################################
+# Product Endpoints (for reference)
+#########################################################
+
 ### List all products (with pagination)
 # Optional query params: page, limit, category_id, is_active
 GET {{baseUrl}}/products?page=1&limit=10
@@ -20,55 +87,30 @@ Content-Type: application/json
 
 {
   "category_id": 1,
-  "name": "New Product5525ddss",
-  "slug": "new-product5525ddss",
-  "description": "teste2",
+  "name": "New Product",
+  "slug": "new-product-xyz",
+  "description": "A great new product",
   "is_active": true
 }
 
 ### Update a product (partial update)
-PUT {{baseUrl}}/products/2
+PUT {{baseUrl}}/products/1
 Content-Type: application/json
 
 {
   "name": "Updated Product Name",
-  "description": "teste2",
+  "description": "Updated description",
   "is_active": false
 }
 
 ### Delete a product
-DELETE {{baseUrl}}/products/4
-Content-Type: application/json
-
-### Health check
-GET http://localhost:8080/health
+DELETE {{baseUrl}}/products/1
 Content-Type: application/json
 
 #########################################################
+# Health Check
+#########################################################
 
-### List all categories
-GET {{baseUrl}}/categories?page=1&limit=10
+### Health check
+GET {{baseUrl}}/health
 Content-Type: application/json
-
-### Get category by ID
-GET {{baseUrl}}/categories/1
-Content-Type: application/json
-
-### Get category by slug
-GET {{baseUrl}}/categories/slug/teste1
-Content-Type: application/json
-
-
-### Create a new Category
-POST {{baseUrl}}/categories
-Content-Type: application/json
-
-{
-  "Name": "teste1",
-  "slug": "New",
-  "description": "teste1",
-  "is_active": true,
-  "parent_id":2
-}
-
-

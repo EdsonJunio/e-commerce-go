@@ -20,16 +20,17 @@ type CategoryHandler struct {
 type createCategoryRequest struct {
 	Name        string `json:"name" binding:"required,min=3,max=255"`
 	Slug        string `json:"slug" binding:"required,min=3,max=255"`
-	ParentID    *uint  `json:"parent_id" binding:"omitempty,gt=0"`
+	ParentID    *uint  `json:"parent_id,omitempty"`
 	IsActive    bool   `json:"is_active"`
 	Description string `json:"description"`
 }
 
 type updateCategoryRequest struct {
-	Name     *string `json:"name,omitempty"`
-	Slug     *string `json:"slug,omitempty"`
-	ParentID *uint   `json:"parent_id"`
-	IsActive *bool   `json:"is_active,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Slug        *string `json:"slug,omitempty"`
+	ParentID    *uint   `json:"parent_id,omitempty"`
+	IsActive    *bool   `json:"is_active,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 // NewCategoryHandler returns a new CategoryHandler with the given service.
@@ -175,11 +176,17 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
+	var parentID *int
+	if req.ParentID != nil {
+		parentIDValue := int(*req.ParentID)
+		parentID = &parentIDValue
+	}
+
 	category := &domain.Category{
 		Name:        strings.TrimSpace(req.Name),
 		Slug:        strings.TrimSpace(req.Slug),
 		IsActive:    req.IsActive,
-		ParentID:    req.ParentID
+		ParentID:    parentID,
 		Description: req.Description,
 	}
 
@@ -199,12 +206,130 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	}
 }
 
-// UpdateCategory handler PUT /categories/:id request.
+// UpdateCategory handles PUT /categories/:id request.
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
 
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		logger.L().Warn(
+			"invalid category ID in UpdateCategory",
+			zap.String("id_param", idParam),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "category ID must be a valid integer"))
+		return
+	}
+
+	var req updateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.L().Warn(
+			"invalid request body in UpdateCategory",
+			zap.Error(err),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
+		return
+	}
+
+	updateData := &domain.Category{
+		ID: id,
+	}
+
+	if req.Name != nil {
+		updateData.Name = strings.TrimSpace(*req.Name)
+	}
+	if req.Slug != nil {
+		updateData.Slug = strings.TrimSpace(*req.Slug)
+	}
+	if req.ParentID != nil {
+		parentIDValue := int(*req.ParentID)
+		updateData.ParentID = &parentIDValue
+	}
+	if req.IsActive != nil {
+		updateData.IsActive = *req.IsActive
+	}
+	if req.Description != nil {
+		updateData.Description = *req.Description
+	}
+
+	if err := h.service.UpdateCategory(id, updateData); err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to update category",
+			err,
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		return
+	}
+
+	updatedCategory, err := h.service.GetCategoryByID(id)
+	if err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to fetch updated category",
+			err,
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		return
+	}
+
+	logger.L().Info(
+		"category updated successfully",
+		zap.Int("id", id),
+		zap.String("request_id", reqID),
+	)
+
+	c.JSON(http.StatusOK, updatedCategory)
 }
 
 // DeleteCategory handles DELETE /categories/:id requests.
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
+	reqID := c.Writer.Header().Get("X-Request-ID")
 
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		logger.L().Warn(
+			"invalid category ID in DeleteCategory",
+			zap.String("id_param", idParam),
+			zap.String("request_id", reqID),
+		)
+		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "category ID must be a valid integer"))
+		return
+	}
+
+	if err := h.service.DeleteCategory(id); err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to delete category",
+			err,
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		return
+	}
+
+	logger.L().Info(
+		"category deleted successfully",
+		zap.Int("id", id),
+		zap.String("request_id", reqID),
+	)
+
+	c.Status(http.StatusNoContent)
 }
