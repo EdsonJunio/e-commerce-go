@@ -25,8 +25,8 @@ type CategoryRepository interface {
 	FindByID(id int) (*Category, error)
 	FindBySlug(slug string) (*Category, error)
 	Create(category *Category) error
-	//Update(category *Category) error
-	//Delete(id int) error
+	Update(category *Category) error
+	Delete(id int) error
 }
 
 // CategoryService defines the business logic contract for Category
@@ -35,6 +35,6 @@ type CategoryService interface {
 	GetCategoryByID(id int) (*Category, error)
 	GetCategoryBySlug(slug string) (*Category, error)
 	CreateCategory(category *Category) error
-	//UpdateCategory(id int, category *Category) error
-	//DeleteCategory(id int) error
+	UpdateCategory(id int, category *Category) error
+	DeleteCategory(id int) error
 }

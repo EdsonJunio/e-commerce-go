@@ -18,5 +18,7 @@ var (
 	ErrCategoryNameRequired        = errors.New("category name is required")
 	ErrCategorySlugRequired        = errors.New("category slug is required")
 	ErrCategorySlugExists          = errors.New("category with this slug already exists")
-	ErrCategoryDescriptionRequired = errors.New("slug is required")
+	ErrCategoryDescriptionRequired = errors.New("category description is required")
+	ErrParentCategoryRequired      = errors.New("parent category ID is required")
+	ErrParentCategoryNotFound      = errors.New("specified parent category was not found")
 )

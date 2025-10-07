@@ -69,7 +69,7 @@ func (r categoryRepository) Create(category *domain.Category) error {
 	err := r.db.Create(category).Error
 	if err != nil {
 		if isUniqueViolation(err) {
-			return domain.ErrCategorySlugRequired
+			return domain.ErrCategorySlugExists
 		}
 		return err
 	}
@@ -77,11 +77,45 @@ func (r categoryRepository) Create(category *domain.Category) error {
 }
 
 func (r categoryRepository) Update(category *domain.Category) error {
-	//TODO implement me
-	panic("implement me")
+	if category.ID == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	tx := r.db.Model(category).Updates(map[string]interface{}{
+		"name":        category.Name,
+		"slug":        category.Slug,
+		"parent_id":   category.ParentID,
+		"is_active":   category.IsActive,
+		"description": category.Description,
+	})
+
+	if tx.Error != nil {
+		if isUniqueViolation(tx.Error) {
+			return domain.ErrCategorySlugRequired
+		}
+		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }
 
 func (r categoryRepository) Delete(id int) error {
-	//TODO implement me
-	panic("implement me")
+	if id <= 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	tx := r.db.Unscoped().Delete(&domain.Category{}, id)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }
