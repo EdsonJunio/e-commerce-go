@@ -1,5 +1,5 @@
 # Estágio de build
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25.1-alpine AS builder
 
 WORKDIR /app
 RUN apk add --no-cache gcc musl-dev
@@ -11,7 +11,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api
 
 # Estágio final
-FROM golang:1.23-alpine
+FROM golang:1.25.1-alpine
 
 WORKDIR /app
 
@@ -21,11 +21,11 @@ RUN apk --no-cache add ca-certificates
 # Copiar o binário do builder
 COPY --from=builder /app/main .
 
-# Copiar o arquivo .env (certifique-se de incluí-lo em .dockerignore se não for necessário em produção)
+# Copiar o arquivo .env (se necessário)
 COPY .env .
 
-# Expor a porta em que a aplicação é executada
+# Expor a porta da aplicação
 EXPOSE 8080
 
-# Comando para executar o executável
+# Comando para executar o binário
 CMD ["./main"]

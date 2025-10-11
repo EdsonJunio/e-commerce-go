@@ -198,7 +198,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		CategoryID:  req.CategoryID,
 		Name:        strings.TrimSpace(req.Name),
 		Slug:        strings.TrimSpace(req.Slug),
-		Description: req.Description,
+		Description: strings.TrimSpace(req.Description),
 		IsActive:    req.IsActive,
 	}
 

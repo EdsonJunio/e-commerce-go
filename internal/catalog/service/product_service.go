@@ -65,7 +65,7 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 		return domain.ErrProductSlugRequired
 	}
 	if product.Description == "" {
-		return domain.ErrInvalidProductPrice
+		return domain.ErrProductDescriptionRequired
 	}
 
 	existing, err := s.repo.FindBySlug(product.Slug)
@@ -74,6 +74,14 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 	}
 	if existing != nil {
 		return domain.ErrProductSlugExists
+	}
+
+	_, err = s.repo.FindByID(*product.CategoryID)
+	if err != nil {
+		if errors.Is(err, domain.ErrCategoryNotFound) {
+			return domain.ErrInvalidCategoryReference
+		}
+		return err
 	}
 
 	return s.repo.Create(product)
