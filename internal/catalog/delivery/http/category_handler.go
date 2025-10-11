@@ -20,9 +20,9 @@ type CategoryHandler struct {
 type createCategoryRequest struct {
 	Name        string `json:"name" binding:"required,min=3,max=255"`
 	Slug        string `json:"slug" binding:"required,min=3,max=255"`
-	ParentID    *uint  `json:"parent_id,omitempty"`
-	IsActive    bool   `json:"is_active"`
 	Description string `json:"description"`
+	IsActive    bool   `json:"is_active"`
+	ParentID    *uint  `json:"parent_id,omitempty"`
 }
 
 type updateCategoryRequest struct {
@@ -165,7 +165,6 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
 	var req createCategoryRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.L().Warn(
 			"invalid request in CreateCategory",
@@ -178,8 +177,8 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 	var parentID *int
 	if req.ParentID != nil {
-		parentIDValue := int(*req.ParentID)
-		parentID = &parentIDValue
+		id := int(*req.ParentID)
+		parentID = &id
 	}
 
 	category := &domain.Category{
@@ -187,7 +186,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		Slug:        strings.TrimSpace(req.Slug),
 		IsActive:    req.IsActive,
 		ParentID:    parentID,
-		Description: req.Description,
+		Description: strings.TrimSpace(req.Description),
 	}
 
 	if err := h.service.CreateCategory(category); err != nil {
@@ -204,6 +203,8 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
 		return
 	}
+
+	c.JSON(http.StatusCreated, category)
 }
 
 // UpdateCategory handles PUT /categories/:id request.

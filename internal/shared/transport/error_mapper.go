@@ -33,6 +33,8 @@ func HTTPErrorMapper(err error) HTTPErrorMapping {
 		return HTTPErrorMapping{"conflict", http.StatusConflict, "WARN"}
 	case errors.Is(err, domain.ErrProductNotFound):
 		return HTTPErrorMapping{"not_found", http.StatusNotFound, "INFO"}
+	case errors.Is(err, domain.ErrInvalidCategoryReference):
+		return HTTPErrorMapping{"invalid_category", http.StatusBadRequest, "WARN"}
 
 	default:
 		return HTTPErrorMapping{"internal_error", http.StatusInternalServerError, "ERROR"}

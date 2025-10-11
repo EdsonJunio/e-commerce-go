@@ -10,6 +10,7 @@ var (
 	ErrInvalidProductPrice        = errors.New("product description is required")
 	ErrProductSlugExists          = errors.New("product with this slug already exists")
 	ErrProductDescriptionRequired = errors.New("slug is required")
+	ErrInvalidCategoryReference   = errors.New("invalid category reference")
 )
 
 var (

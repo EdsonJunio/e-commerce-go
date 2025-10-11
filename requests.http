@@ -2,6 +2,60 @@
 @baseUrl = http://localhost:8080/api/v1
 
 #########################################################
+# Product Endpoints (for reference)
+#########################################################
+
+### List all products (with pagination)
+# Optional query params: page, limit, category_id, is_active
+GET {{baseUrl}}/products?page=1&limit=10
+Content-Type: application/json
+
+### Get product by ID
+GET {{baseUrl}}/products/1
+Content-Type: application/json
+
+### Get product by slug
+GET {{baseUrl}}/products/slug/new-product5525dds
+Content-Type: application/json
+
+### Create a new product
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "category_id": 1,
+  "name": "New Product",
+  "slug": "new-product-xyz",
+  "is_active": true,
+  "description": "A great new product"
+
+}
+
+### Update a product (partial update)
+PUT {{baseUrl}}/products/1
+Content-Type: application/json
+
+{
+  "name": "Updated Product Name",
+  "description": "Updated description",
+  "is_active": false
+}
+
+### Delete a product
+DELETE {{baseUrl}}/products/1
+Content-Type: application/json
+
+#########################################################
+# Health Check
+#########################################################
+
+### Health check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+
+
+#########################################################
 # Category Endpoints
 #########################################################
 
@@ -11,7 +65,7 @@ GET {{baseUrl}}/categories?page=1&limit=10
 Content-Type: application/json
 
 ### Get category by ID
-GET {{baseUrl}}/categories/2
+GET {{baseUrl}}/categories/1
 Content-Type: application/json
 
 ### Get category by slug
@@ -32,7 +86,7 @@ Content-Type: application/json
 
 ### Update a category (partial update)
 # Only include fields that need to be updated
-PUT {{baseUrl}}/categories/2
+PUT {{baseUrl}}/categories/1
 Content-Type: application/json
 
 {
@@ -62,55 +116,4 @@ Content-Type: application/json
 
 ### Try to delete a category with subcategories (should fail)
 DELETE {{baseUrl}}/categories/1
-Content-Type: application/json
-
-#########################################################
-# Product Endpoints (for reference)
-#########################################################
-
-### List all products (with pagination)
-# Optional query params: page, limit, category_id, is_active
-GET {{baseUrl}}/products?page=1&limit=10
-Content-Type: application/json
-
-### Get product by ID
-GET {{baseUrl}}/products/1
-Content-Type: application/json
-
-### Get product by slug
-GET {{baseUrl}}/products/slug/new-product5525dds
-Content-Type: application/json
-
-### Create a new product
-POST {{baseUrl}}/products
-Content-Type: application/json
-
-{
-  "category_id": 1,
-  "name": "New Product",
-  "slug": "new-product-xyz",
-  "description": "A great new product",
-  "is_active": true
-}
-
-### Update a product (partial update)
-PUT {{baseUrl}}/products/1
-Content-Type: application/json
-
-{
-  "name": "Updated Product Name",
-  "description": "Updated description",
-  "is_active": false
-}
-
-### Delete a product
-DELETE {{baseUrl}}/products/1
-Content-Type: application/json
-
-#########################################################
-# Health Check
-#########################################################
-
-### Health check
-GET {{baseUrl}}/health
 Content-Type: application/json
