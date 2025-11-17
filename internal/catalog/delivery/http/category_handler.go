@@ -33,12 +33,10 @@ type updateCategoryRequest struct {
 	Description *string `json:"description,omitempty"`
 }
 
-// NewCategoryHandler returns a new CategoryHandler with the given service.
 func NewCategoryHandler(service domain.CategoryService) *CategoryHandler {
 	return &CategoryHandler{service: service}
 }
 
-// RegisterCategoryRoutes registers category endpoints in the Gin router.
 func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
@@ -54,7 +52,6 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 	}
 }
 
-// ListCategories handles GET /categories with pagination and filters.
 func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -91,7 +88,6 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewPaginatedResponse(categories, total, pagination.Page, pagination.Limit, c.Request.URL.Path))
 }
 
-// GetCategory handles GET /categories/:id request.
 func (h *CategoryHandler) GetCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -131,7 +127,6 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, category)
 }
 
-// GetCategoryBySlug handles GET /categories/slug/:slug request.
 func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
@@ -160,7 +155,6 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 	c.JSON(http.StatusOK, categorySlug)
 }
 
-// CreateCategory handles POST /categories request
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
@@ -207,7 +201,6 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	c.JSON(http.StatusCreated, category)
 }
 
-// UpdateCategory handles PUT /categories/:id request.
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
@@ -295,7 +288,6 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedCategory)
 }
 
-// DeleteCategory handles DELETE /categories/:id requests.
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
