@@ -14,7 +14,7 @@ func init() {
 	_ = godotenv.Load()
 }
 
-// Config contém todas as configurações da aplicação
+// Config contains all the settings of the application
 type Config struct {
 	AppName     string
 	Version     string
@@ -24,7 +24,7 @@ type Config struct {
 	CORS        CORSConfig
 }
 
-// ServerConfig contém as configurações do servidor HTTP
+// ServerConfig contains the HTTP server settings
 type ServerConfig struct {
 	Port            string
 	ReadTimeout     time.Duration
@@ -33,7 +33,7 @@ type ServerConfig struct {
 	ShutdownTimeout time.Duration
 }
 
-// DatabaseConfig contém as configurações de conexão com o banco de dados
+// DatabaseConfig contains the database connection settings
 type DatabaseConfig struct {
 	Host            string
 	Port            string
@@ -47,7 +47,7 @@ type DatabaseConfig struct {
 	LogLevel        string
 }
 
-// CORSConfig contém as configurações de CORS
+// CORSConfig contains the CORS settings
 type CORSConfig struct {
 	AllowOrigins     []string
 	AllowMethods     []string
@@ -125,7 +125,7 @@ func getEnvBool(key string, defaultValue bool) bool {
 	return boolValue
 }
 
-// Load carrega as configurações da aplicação a partir de variáveis de ambiente
+// Load loads application settings from environment variables
 func Load() *Config {
 	return &Config{
 		AppName:     getEnvString("APP_NAME", "e-commerce-go"),

@@ -20,7 +20,6 @@ func NewProductRepository(db *gorm.DB) domain.ProductRepository {
 	return &productRepository{db: db}
 }
 
-// List returns products with pagination and filters.
 func (r *productRepository) List(limit, offset int, filters map[string]interface{}) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	var total int64
@@ -41,8 +40,6 @@ func (r *productRepository) List(limit, offset int, filters map[string]interface
 	return products, total, nil
 }
 
-// FindByID fetches a product by ID.
-// Returns ErrNotFound if no record exists.
 func (r *productRepository) FindByID(id int) (*domain.Product, error) {
 	var product domain.Product
 	err := r.db.First(&product, id).Error
@@ -55,8 +52,6 @@ func (r *productRepository) FindByID(id int) (*domain.Product, error) {
 	return &product, nil
 }
 
-// FindBySlug fetches a product by slug.
-// Returns (nil, nil) if no record exists.
 func (r *productRepository) FindBySlug(slug string) (*domain.Product, error) {
 	var product domain.Product
 	err := r.db.Where("slug = ?", slug).First(&product).Error
@@ -69,8 +64,6 @@ func (r *productRepository) FindBySlug(slug string) (*domain.Product, error) {
 	return &product, nil
 }
 
-// Create inserts a new product in the database.
-// Returns ErrSlugExists if the slug already exists.
 func (r *productRepository) Create(product *domain.Product) error {
 	err := r.db.Create(product).Error
 	if err != nil {
@@ -82,8 +75,6 @@ func (r *productRepository) Create(product *domain.Product) error {
 	return nil
 }
 
-// Update saves product changes in the database.
-// Returns ErrSlugExists if another record already uses the same slug.
 func (r *productRepository) Update(product *domain.Product) error {
 	err := r.db.Save(product).Error
 	if err != nil {
@@ -95,8 +86,6 @@ func (r *productRepository) Update(product *domain.Product) error {
 	return nil
 }
 
-// Delete removes a product by ID.
-// Returns ErrNotFound if no record was affected.
 func (r *productRepository) Delete(id int) error {
 	res := r.db.Delete(&domain.Product{}, id)
 	if res.Error != nil {
@@ -108,7 +97,6 @@ func (r *productRepository) Delete(id int) error {
 	return nil
 }
 
-// isUniqueViolation checks if the error corresponds to a UNIQUE constraint violation.
 func isUniqueViolation(err error) bool {
 	var pgxErr *pgconn.PgError
 	if errors.As(err, &pgxErr) {

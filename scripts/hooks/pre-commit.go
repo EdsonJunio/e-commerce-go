@@ -4,80 +4,103 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
-)
+	"strings"
 
-const (
-	Red    = "\033[31m"
-	Green  = "\033[32m"
-	Yellow = "\033[33m"
-	Cyan   = "\033[36m"
-	Reset  = "\033[0m"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	fmt.Println(Cyan + "🚀 Running tests before commit..." + Reset)
+	logger := newLogger()
+	defer logger.Sync()
 
-	cmd := exec.Command("go", "test", "-v", "-cover", "./...")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
-
-	err := cmd.Run()
-
-	scanner := bufio.NewScanner(&out)
-
-	failRegex := regexp.MustCompile(`--- FAIL: (\S+)`)
-	passRegex := regexp.MustCompile(`--- PASS: (\S+)`)
-	fileRegex := regexp.MustCompile(`\t(.+\.go):(\d+):`)
-
-	var failedTests []string
-	var failedFiles []string
-	var passedTests []string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		switch {
-		case failRegex.MatchString(line):
-			fmt.Println(Red + line + Reset)
-			match := failRegex.FindStringSubmatch(line)
-			failedTests = append(failedTests, match[1])
-		case passRegex.MatchString(line):
-			fmt.Println(Green + line + Reset)
-			match := passRegex.FindStringSubmatch(line)
-			passedTests = append(passedTests, match[1])
-		default:
-			fmt.Println(line)
-			if match := fileRegex.FindStringSubmatch(line); match != nil {
-				failedFiles = append(failedFiles, fmt.Sprintf("%s:%s", match[1], match[2]))
-			}
-		}
-	}
-
-	fmt.Println()
-	fmt.Println(Cyan + "📊 Test Summary:" + Reset)
-	fmt.Printf(Green+" - Passed: %d"+Reset+"\n", len(passedTests))
-	fmt.Printf(Red+" - Failed: %d"+Reset+"\n", len(failedTests))
-
-	if len(failedTests) > 0 || err != nil {
-		if len(failedTests) > 0 {
-			fmt.Println(Red + "\n❌ Fix the following tests/files before committing:" + Reset)
-			for _, test := range failedTests {
-				fmt.Printf(Red+" - Test: %s"+Reset+"\n", test)
-			}
-			for _, file := range failedFiles {
-				fmt.Printf(Yellow+" - File: %s"+Reset+"\n", file)
-			}
-		} else {
-			fmt.Println(Red + "\n❌ Some tests failed. Check details above." + Reset)
-		}
+	if len(os.Args) < 2 {
+		logger.Error("missing commit message file argument")
+		fmt.Fprintln(os.Stderr, "commit-msg hook: missing file argument")
 		os.Exit(1)
 	}
 
-	fmt.Println(Green + "\n✅ All tests passed! Proceeding with commit..." + Reset)
+	msgFile := os.Args[1]
+	f, err := os.Open(msgFile)
+	if err != nil {
+		logger.Error("failed to open commit message file", zap.String("file", msgFile), zap.Error(err))
+		fmt.Fprintln(os.Stderr, "commit-msg hook: failed to open commit message file:", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	firstLine, err := readFirstNonEmptyLine(f)
+	if err != nil {
+		logger.Error("failed to read commit message", zap.String("file", msgFile), zap.Error(err))
+		fmt.Fprintln(os.Stderr, "commit-msg hook: failed to read commit message:", err)
+		os.Exit(1)
+	}
+
+	// Conventional Commits: type(optional scope): description
+	// types allowed: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
+	pattern := regexp.MustCompile(`^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([\w\-\_]+\))?: .+`)
+
+	if !pattern.MatchString(firstLine) {
+		logger.Error("invalid commit message", zap.String("message", firstLine))
+		printValidationHelp(firstLine)
+		os.Exit(1)
+	}
+
+	logger.Info("commit message validated", zap.String("message", firstLine))
+	os.Exit(0)
+}
+
+func readFirstNonEmptyLine(f *os.File) (string, error) {
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		// Skip comments created by git when opening editor (lines starting with #)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		return line, nil
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return "", fmt.Errorf("commit message is empty")
+}
+
+func printValidationHelp(msg string) {
+	fmt.Fprintln(os.Stderr, "Invalid commit message.")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Commit message must follow Conventional Commits format:")
+	fmt.Fprintln(os.Stderr, "  type(optional scope): description")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Allowed types:")
+	fmt.Fprintln(os.Stderr, "  feat | fix | chore | docs | style | refactor | perf | test | build | ci | revert")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Examples:")
+	fmt.Fprintln(os.Stderr, "  feat: add product search endpoint")
+	fmt.Fprintln(os.Stderr, "  fix(api): handle nil pointer in product handler")
+	fmt.Fprintln(os.Stderr, "  chore(deps): update go.mod")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Commit message provided:")
+	fmt.Fprintln(os.Stderr, "  ", msg)
+}
+
+func newLogger() *zap.Logger {
+	cfg := zap.Config{
+		Encoding:         "console",
+		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stdout"},
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:  "msg",
+			LevelKey:    "level",
+			TimeKey:     "time",
+			EncodeTime:  zapcore.ISO8601TimeEncoder,
+			EncodeLevel: zapcore.CapitalLevelEncoder,
+		},
+	}
+	logger, _ := cfg.Build()
+	return logger
 }

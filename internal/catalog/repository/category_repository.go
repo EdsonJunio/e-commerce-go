@@ -17,7 +17,6 @@ func NewCategoryRepository(db *gorm.DB) domain.CategoryRepository {
 	return &categoryRepository{db: db}
 }
 
-// List returns categories with pagination and filters.
 func (r *categoryRepository) List(limit, offset int, filters map[string]interface{}) ([]domain.Category, int64, error) {
 	var categories []domain.Category
 	var total int64

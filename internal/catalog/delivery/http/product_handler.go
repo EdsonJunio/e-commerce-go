@@ -34,12 +34,10 @@ type updateProductRequest struct {
 	IsActive    *bool   `json:"is_active,omitempty"`
 }
 
-// NewProductHandler returns a new ProductHandler with the given service.
 func NewProductHandler(service domain.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// RegisterProductRoutes registers product endpoints in the Gin router.
 func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 	{
@@ -55,7 +53,6 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 	}
 }
 
-// ListProducts handles GET /products with pagination and filters.
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -101,7 +98,6 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewPaginatedResponse(products, total, page, limit, c.Request.URL.Path))
 }
 
-// GetProduct handles GET /products/:id requests.
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -141,7 +137,6 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// GetProductBySlug handles GET /products/slug/:slug requests.
 func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
@@ -179,7 +174,6 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// CreateProduct handles POST /products requests.
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
@@ -226,7 +220,6 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, product)
 }
 
-// UpdateProduct handles PUT /products/:id requests.
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -309,7 +302,6 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedProduct)
 }
 
-// DeleteProduct handles DELETE /products/:id requests.
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
