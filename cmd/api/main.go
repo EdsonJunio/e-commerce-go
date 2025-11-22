@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	categoryHTTP "e-commerce-go/internal/catalog/delivery/http"
-	"e-commerce-go/internal/catalog/repository"
-	"e-commerce-go/internal/catalog/service"
 	"errors"
 	"log"
 	"net/http"
@@ -13,11 +10,16 @@ import (
 	"syscall"
 	"time"
 
+	// Internal imports
+	categoryHTTP "e-commerce-go/internal/catalog/delivery/http"
+	"e-commerce-go/internal/catalog/repository"
+	"e-commerce-go/internal/catalog/service"
 	"e-commerce-go/internal/shared/config"
 	"e-commerce-go/internal/shared/database"
 	"e-commerce-go/internal/shared/middleware"
 	"e-commerce-go/pkg/logger"
 
+	// External libraries
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
@@ -26,71 +28,117 @@ import (
 	"gorm.io/gorm"
 )
 
-// bootServer initializes dependencies, registers routes, and returns a configured *http.Server.
-func bootServer() (*http.Server, *gorm.DB, error) {
-	// Load configuration.
+func main() {
+	// Load Configuration (Single Source of Truth)
 	cfg := config.Load()
 
-	// Initialize global logger.
+	// Initialize Logger (Immediately to catch boot errors)
 	if err := logger.Init(logger.Config{
 		Environment: cfg.Environment,
 		Service:     cfg.AppName,
 		Version:     cfg.Version,
 	}); err != nil {
+		log.Fatalf("failed to initialize logger: %v", err)
+	}
+	defer logger.Sync()
+
+	// Global Gin Configuration
+	if cfg.Environment == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
+	// Boot Application
+	srv, db, err := buildServer(cfg)
+	if err != nil {
+		logger.L().Fatal("failed to build server", zap.Error(err))
+	}
+
+	// Start Server in Background
+	serverErrors := make(chan error, 1)
+	go func() {
+		logger.L().Info("server started",
+			zap.String("addr", srv.Addr),
+			zap.String("env", cfg.Environment),
+		)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrors <- err
+		}
+	}()
+
+	// Await Shutdown Signal (Graceful Shutdown)
+	osSignals := make(chan os.Signal, 1)
+	signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrors:
+		logger.L().Fatal("server crashed", zap.Error(err))
+
+	case sig := <-osSignals:
+		logger.L().Info("shutdown signal received", zap.String("signal", sig.String()))
+
+		// Context with Timeout to force shutdown if it takes too long
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
+		defer cancel()
+
+		// Close HTTP connections (stop receiving new requests)
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.L().Error("server forced to shutdown", zap.Error(err))
+		}
+
+		// Close Database connection (Cleanup resources)
+		closeDBConnection(db)
+
+		logger.L().Info("server exited properly")
+	}
+}
+
+// buildServer configures dependencies, routes, and returns the ready-to-run server.
+func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, error) {
+	// Database Connection
+	db, err := database.ConnectDB()
+	if err != nil {
 		return nil, nil, err
 	}
 
-	// Configure Gin mode based on environment.
-	if os.Getenv("GIN_MODE") != "release" {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	// Initialize DB connection.
-	db, err := database.ConnectDB()
-	if err != nil {
-		logger.L().Fatal("failed to connect to database", zap.Error(err))
-	}
-
-	// Create Gin engine.
+	// Router Initialization
 	r := gin.New()
 
-	// Global middlewares.
+	// Global Middlewares
 	r.Use(requestid.New())
-	r.Use(logger.RecoveryWithLogger())  // recovers + logs stack
-	r.Use(logger.GinLoggerMiddleware()) // access logs
+	r.Use(logger.RecoveryWithLogger())
+	r.Use(logger.GinLoggerMiddleware())
 
-	// CORS.
-	corsCfg := cors.Config{
+	// CORS Configuration
+	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.CORS.AllowOrigins,
 		AllowMethods:     cfg.CORS.AllowMethods,
 		AllowHeaders:     cfg.CORS.AllowHeaders,
 		AllowCredentials: cfg.CORS.AllowCredentials,
 		MaxAge:           cfg.CORS.MaxAge,
-	}
-	r.Use(cors.New(corsCfg))
+	}))
 
-	// Error normalization.
 	r.Use(middleware.ErrorHandler())
 
-	// Health & diagnostics.
+	// Infrastructure (Health & Diagnostics)
 	registerHealthEndpoints(r, db, cfg.Version)
 	registerDiagnostics(r, cfg.Environment)
 
-	// Category module wiring.
+	// Module: Catalog
+	// Since Product depends on Category, instantiate Category first
 	categoryRepo := repository.NewCategoryRepository(db)
-	categorySvc := service.NewCategoryService(categoryRepo)
-	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
-	categoryHandler.RegisterCategoryRoutes(r)
-
-	// Product module wiring.
 	productRepo := repository.NewProductRepository(db)
+
+	categorySvc := service.NewCategoryService(categoryRepo)
 	productSvc := service.NewProductService(productRepo, categoryRepo)
+
+	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
 	productHandler := categoryHTTP.NewProductHandler(productSvc)
+
+	categoryHandler.RegisterCategoryRoutes(r)
 	productHandler.RegisterProductRoutes(r)
 
-	// Build HTTP server.
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      r,
@@ -102,109 +150,51 @@ func bootServer() (*http.Server, *gorm.DB, error) {
 	return srv, db, nil
 }
 
-// registerHealthEndpoints exposes /live and /ready endpoints.
-// - /live: always 200 if the process is running
-// - /ready: pings the DB with a short timeout; 200 if ready, 503 otherwise
+// closeDBConnection retrieves the generic SQL interface and closes it.
+func closeDBConnection(db *gorm.DB) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		logger.L().Error("failed to get sql.DB for closing", zap.Error(err))
+		return
+	}
+	if err := sqlDB.Close(); err != nil {
+		logger.L().Error("failed to close database connection", zap.Error(err))
+	} else {
+		logger.L().Info("database connection closed")
+	}
+}
+
+// registerHealthEndpoints exposes /live and /ready endpoints for k8s probes.
 func registerHealthEndpoints(r *gin.Engine, db *gorm.DB, version string) {
-	// Liveness: basic process health.
 	r.GET("/live", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "alive",
-			"version": version,
-		})
+		c.JSON(http.StatusOK, gin.H{"status": "alive", "version": version})
 	})
 
-	// Readiness: check critical deps (DB).
 	r.GET("/ready", func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 500*time.Millisecond)
+		// Short timeout to avoid blocking the Load Balancer
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
 
 		sqlDB, err := db.DB()
 		if err != nil {
-			logger.L().Error("readiness: failed to get sqlDB", zap.Error(err))
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"status":  "not_ready",
-				"version": version,
-				"reason":  "db_handle_error",
-			})
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "down", "reason": "db_handle_error"})
 			return
 		}
+
 		if err := sqlDB.PingContext(ctx); err != nil {
-			logger.L().Warn("readiness: db ping failed", zap.Error(err))
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"status":  "not_ready",
-				"version": version,
-				"reason":  "db_unreachable",
-			})
+			logger.L().Warn("readiness check failed", zap.Error(err))
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "down", "reason": "db_unreachable"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ready",
-			"version": version,
-		})
-	})
 
-	// Simple health (kept for compatibility).
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"version": version,
-		})
+		c.JSON(http.StatusOK, gin.H{"status": "ready", "version": version})
 	})
 }
 
-// registerDiagnostics conditionally registers pprof under /debug/pprof.
-// Enabled when ENV != production OR when ENABLE_PPROF=true.
-func registerDiagnostics(r *gin.Engine, environment string) {
-	if environment != "production" || os.Getenv("ENABLE_PPROF") == "true" {
+// registerDiagnostics conditionally enables pprof.
+func registerDiagnostics(r *gin.Engine, env string) {
+	// Pprof should be protected or disabled in public production environments
+	if env != "production" || os.Getenv("ENABLE_PPROF") == "true" {
 		pprof.Register(r, "/debug/pprof")
-		logger.L().Info("pprof enabled at /debug/pprof", zap.String("env", environment))
-	}
-}
-
-func main() {
-	srv, _, err := bootServer()
-	if err != nil {
-		log.Fatalf("failed to boot server: %v", err)
-	}
-	defer logger.Sync()
-
-	// Start server in background.
-	serverErrors := make(chan error, 1)
-	go func() {
-		logger.L().Info("server starting", zap.String("addr", srv.Addr))
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serverErrors <- err
-			return
-		}
-		serverErrors <- nil
-	}()
-
-	// OS signal handling for graceful shutdown.
-	osSignals := make(chan os.Signal, 1)
-	signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
-
-	select {
-	case err := <-serverErrors:
-		if err != nil {
-			logger.L().Fatal("server failed to start", zap.Error(err))
-		} else {
-			logger.L().Info("server stopped")
-		}
-
-	case sig := <-osSignals:
-		logger.L().Info("shutdown signal received, starting graceful shutdown",
-			zap.String("signal", sig.String()),
-		)
-
-		// Graceful shutdown with timeout from config.
-		cfg := config.Load()
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
-		defer cancel()
-
-		if err := srv.Shutdown(ctx); err != nil {
-			logger.L().Fatal("server shutdown error", zap.Error(err))
-		}
-		logger.L().Info("server shut down gracefully")
 	}
 }
