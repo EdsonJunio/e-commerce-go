@@ -8,11 +8,12 @@ import (
 
 type productService struct {
 	repo domain.ProductRepository
+	cate domain.CategoryRepository
 }
 
 // NewProductService returns a new instance of productService implementing domain.ProductService.
-func NewProductService(repo domain.ProductRepository) domain.ProductService {
-	return &productService{repo: repo}
+func NewProductService(repo domain.ProductRepository, cate domain.CategoryRepository) domain.ProductService {
+	return &productService{repo: repo, cate: cate}
 }
 
 func (s *productService) ListProducts(p domain.Pagination, filters map[string]interface{}) ([]domain.Product, int64, error) {
@@ -63,16 +64,14 @@ func (s *productService) CreateProduct(product *domain.Product) error {
 	if product.Description == "" {
 		return domain.ErrProductDescriptionRequired
 	}
-
-	existing, err := s.repo.FindBySlug(product.Slug)
-	if err != nil {
-		return err
+	if product.SeoTitle == "" {
+		return domain.ErrSeoTitle
 	}
-	if existing != nil {
-		return domain.ErrProductSlugExists
+	if product.SeoDescription == "" {
+		return domain.ErrSeoDescription
 	}
 
-	_, err = s.repo.FindByID(*product.CategoryID)
+	_, err := s.cate.FindByID(*product.CategoryID)
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryNotFound) {
 			return domain.ErrInvalidCategoryReference

@@ -78,17 +78,17 @@ func bootServer() (*http.Server, *gorm.DB, error) {
 	registerHealthEndpoints(r, db, cfg.Version)
 	registerDiagnostics(r, cfg.Environment)
 
-	// Product module wiring.
-	productRepo := repository.NewProductRepository(db)
-	productSvc := service.NewProductService(productRepo)
-	productHandler := categoryHTTP.NewProductHandler(productSvc)
-	productHandler.RegisterProductRoutes(r)
-
 	// Category module wiring.
 	categoryRepo := repository.NewCategoryRepository(db)
 	categorySvc := service.NewCategoryService(categoryRepo)
 	categoryHandler := categoryHTTP.NewCategoryHandler(categorySvc)
 	categoryHandler.RegisterCategoryRoutes(r)
+
+	// Product module wiring.
+	productRepo := repository.NewProductRepository(db)
+	productSvc := service.NewProductService(productRepo, categoryRepo)
+	productHandler := categoryHTTP.NewProductHandler(productSvc)
+	productHandler.RegisterProductRoutes(r)
 
 	// Build HTTP server.
 	srv := &http.Server{

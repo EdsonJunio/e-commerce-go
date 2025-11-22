@@ -6,7 +6,6 @@ import (
 	"e-commerce-go/internal/catalog/domain"
 
 	"github.com/jackc/pgconn"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -68,7 +67,7 @@ func (r *productRepository) Create(product *domain.Product) error {
 	err := r.db.Create(product).Error
 	if err != nil {
 		if isUniqueViolation(err) {
-			return domain.ErrProductSlugRequired
+			return domain.ErrInvalidProductPrice
 		}
 		return err
 	}
@@ -98,13 +97,9 @@ func (r *productRepository) Delete(id int) error {
 }
 
 func isUniqueViolation(err error) bool {
-	var pgxErr *pgconn.PgError
-	if errors.As(err, &pgxErr) {
-		return pgxErr.Code == "23505"
-	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return string(pqErr.Code) == "23505"
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
 	}
 	return false
 }

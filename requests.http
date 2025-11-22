@@ -15,7 +15,7 @@ GET {{baseUrl}}/products/1
 Content-Type: application/json
 
 ### Get product by slug
-GET {{baseUrl}}/products/slug/new-product5525dds
+GET {{baseUrl}}/products/slug/moda
 Content-Type: application/json
 
 ### Create a new product
@@ -24,10 +24,13 @@ Content-Type: application/json
 
 {
   "category_id": 1,
-  "name": "New Product",
-  "slug": "new-product-xyz",
+  "name": "Sapato",
+  "slug": "62",
   "is_active": true,
-  "description": "A great new product"
+  "description": "A great new product",
+  "seoTitle": "seoTitle",
+  "seoDescription": "seoDescription"
+
 
 }
 
@@ -36,9 +39,13 @@ PUT {{baseUrl}}/products/1
 Content-Type: application/json
 
 {
-  "name": "Updated Product Name",
-  "description": "Updated description",
-  "is_active": false
+  "category_id": 1,
+  "name": "Sapato",
+  "slug": "62",
+  "is_active": true,
+  "description": "A great new product",
+  "seoTitle": "seoTitle",
+  "seoDescription": "seoDescription"
 }
 
 ### Delete a product

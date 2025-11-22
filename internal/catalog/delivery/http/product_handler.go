@@ -2,6 +2,7 @@ package http
 
 import (
 	"e-commerce-go/internal/shared/transport"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,11 +20,13 @@ type ProductHandler struct {
 }
 
 type createProductRequest struct {
-	CategoryID  *int   `json:"category_id" binding:"required,min=1"`
-	Name        string `json:"name" binding:"required,min=3,max=255"`
-	Slug        string `json:"slug" binding:"required,min=3,max=255"`
-	Description string `json:"description"`
-	IsActive    bool   `json:"is_active"`
+	CategoryID     *int   `json:"category_id" binding:"required,min=1"`
+	Name           string `json:"name" binding:"required,min=3,max=255"`
+	Slug           string `json:"slug" binding:"required"`
+	IsActive       bool   `json:"is_active" binding:"required"`
+	SeoTitle       string `json:"seoTitle" binding:"required,min=3,max=255"`
+	SeoDescription string `json:"SeoDescription" binding:"required,min=3,max=255"`
+	Description    string `json:"description" binding:"required,min=3,max=255"`
 }
 
 type updateProductRequest struct {
@@ -189,11 +192,13 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	product := &domain.Product{
-		CategoryID:  req.CategoryID,
-		Name:        strings.TrimSpace(req.Name),
-		Slug:        strings.TrimSpace(req.Slug),
-		Description: strings.TrimSpace(req.Description),
-		IsActive:    req.IsActive,
+		CategoryID:     req.CategoryID,
+		Name:           strings.TrimSpace(req.Name),
+		Slug:           strings.TrimSpace(req.Slug),
+		IsActive:       req.IsActive,
+		SeoTitle:       strings.TrimSpace(req.SeoTitle),
+		SeoDescription: strings.TrimSpace(req.SeoDescription),
+		Description:    strings.TrimSpace(req.Description),
 	}
 
 	if err := h.service.CreateProduct(product); err != nil {
@@ -202,7 +207,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		transport.LogByErrorMapping(
 			mapping,
 			"failed to create product",
-			err,
+			errors.New(mapping.Code),
 			zap.String("slug", req.Slug),
 			zap.String("request_id", reqID),
 		)

@@ -7,7 +7,8 @@ import (
 )
 
 func LogByErrorMapping(mapping HTTPErrorMapping, msg string, err error, fields ...zap.Field) {
-	fields = append(fields, zap.Error(err))
+
+	fields = append(fields, zap.String("error_code", mapping.Code))
 
 	switch mapping.LogLevel {
 	case "ERROR":

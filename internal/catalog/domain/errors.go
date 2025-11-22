@@ -9,8 +9,10 @@ var (
 	ErrProductSlugRequired        = errors.New("product slug is required")
 	ErrInvalidProductPrice        = errors.New("product description is required")
 	ErrProductSlugExists          = errors.New("product with this slug already exists")
-	ErrProductDescriptionRequired = errors.New("slug is required")
+	ErrProductDescriptionRequired = errors.New("description is required")
 	ErrInvalidCategoryReference   = errors.New("invalid category reference")
+	ErrSeoTitle                   = errors.New("seoTitle is required")
+	ErrSeoDescription             = errors.New("seoDescription is required")
 )
 
 var (
