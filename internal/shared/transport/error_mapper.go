@@ -7,36 +7,54 @@ import (
 	"e-commerce-go/internal/catalog/domain"
 )
 
+type LogLevel string
+
+const (
+	LevelError LogLevel = "ERROR"
+	LevelWarn  LogLevel = "WARN"
+	LevelInfo  LogLevel = "INFO"
+	LevelDebug LogLevel = "DEBUG"
+)
+
 type HTTPErrorMapping struct {
 	Code     string
 	HTTPCode int
-	LogLevel string
+	LogLevel LogLevel
 }
 
+var (
+	mappingNotFound       = HTTPErrorMapping{"not_found", http.StatusNotFound, LevelInfo}
+	mappingConflict       = HTTPErrorMapping{"conflict", http.StatusConflict, LevelWarn}
+	mappingInvalidRequest = HTTPErrorMapping{"invalid_request", http.StatusBadRequest, LevelWarn}
+	mappingInternal       = HTTPErrorMapping{"internal_error", http.StatusInternalServerError, LevelError}
+)
+
 func HTTPErrorMapper(err error) HTTPErrorMapping {
+	if err == nil {
+		return HTTPErrorMapping{"", http.StatusOK, LevelInfo}
+	}
+
 	switch {
-	case err == nil:
-		return HTTPErrorMapping{"", http.StatusOK, "INFO"}
+	// 404 Not Found Group
+	case errors.Is(err, domain.ErrCategoryNotFound),
+		errors.Is(err, domain.ErrProductNotFound):
+		return mappingNotFound
 
-	// Category errors
-	case errors.Is(err, domain.ErrCategoryNotFound):
-		return HTTPErrorMapping{"not_found", http.StatusNotFound, "INFO"}
-	case errors.Is(err, domain.ErrCategoryDescriptionRequired):
-		return HTTPErrorMapping{"invalid_request", http.StatusBadRequest, "WARN"}
-	case errors.Is(err, domain.ErrCategorySlugExists):
-		return HTTPErrorMapping{"conflict", http.StatusConflict, "WARN"}
+	// 409 Conflict Group
+	case errors.Is(err, domain.ErrCategorySlugExists),
+		errors.Is(err, domain.ErrProductSlugExists):
+		return mappingConflict
 
-	// Product errors
-	case errors.Is(err, domain.ErrInvalidProductID):
-		return HTTPErrorMapping{"invalid_id", http.StatusBadRequest, "WARN"}
-	case errors.Is(err, domain.ErrProductSlugExists):
-		return HTTPErrorMapping{"conflict", http.StatusConflict, "WARN"}
-	case errors.Is(err, domain.ErrProductNotFound):
-		return HTTPErrorMapping{"not_found", http.StatusNotFound, "INFO"}
-	case errors.Is(err, domain.ErrInvalidCategoryReference):
-		return HTTPErrorMapping{"invalid_category", http.StatusBadRequest, "WARN"}
+	// 400 Bad Request Group (Validation)
+	case errors.Is(err, domain.ErrCategoryDescriptionRequired),
+		errors.Is(err, domain.ErrInvalidProductID),
+		errors.Is(err, domain.ErrInvalidCategoryReference),
+		errors.Is(err, domain.ErrProductSlugRequired),
+		errors.Is(err, domain.ErrProductNameRequired):
+		return mappingInvalidRequest
 
+	// Default 500
 	default:
-		return HTTPErrorMapping{"internal_error", http.StatusInternalServerError, "ERROR"}
+		return mappingInternal
 	}
 }

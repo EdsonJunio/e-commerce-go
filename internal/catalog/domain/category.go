@@ -1,19 +1,23 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // Category represents the category aggregate persisted in the database.
 type Category struct {
-	ID            int        `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	Name          string     `gorm:"column:name;not null" json:"name"`
-	Slug          string     `gorm:"column:slug;unique;not null" json:"slug"`
-	ParentID      *int       `gorm:"column:parent_id" json:"parent_id,omitempty"`
-	IsActive      bool       `gorm:"column:is_active;default:true" json:"is_active"`
-	Description   string     `gorm:"column:description" json:"description"`
-	CreatedAt     time.Time  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
-	UpdatedAt     time.Time  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
-	DeletedAt     *time.Time `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
-	DeletedReason string     `gorm:"column:deleted_reason" json:"deleted_reason"`
+	ID            int            `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	Name          string         `gorm:"column:name;not null" json:"name"`
+	Slug          string         `gorm:"column:slug;unique;not null" json:"slug"`
+	ParentID      *int           `gorm:"column:parent_id" json:"parent_id,omitempty"`
+	IsActive      bool           `gorm:"column:is_active;default:true" json:"is_active"`
+	Description   string         `gorm:"column:description" json:"description"`
+	CreatedAt     time.Time      `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt     time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
+	DeletedReason string         `gorm:"column:deleted_reason" json:"deleted_reason"`
 }
 
 // TableName sets the table name for GORM.

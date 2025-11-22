@@ -7,17 +7,24 @@ import (
 )
 
 func LogByErrorMapping(mapping HTTPErrorMapping, msg string, err error, fields ...zap.Field) {
-
 	fields = append(fields, zap.String("error_code", mapping.Code))
 
+	if err != nil {
+		fields = append(fields, zap.Error(err))
+	}
+
+	log := logger.L()
+
 	switch mapping.LogLevel {
-	case "ERROR":
-		logger.L().Error(msg, fields...)
-	case "WARN":
-		logger.L().Warn(msg, fields...)
-	case "INFO":
-		logger.L().Info(msg, fields...)
+	case LevelError:
+		log.Error(msg, fields...)
+	case LevelWarn:
+		log.Warn(msg, fields...)
+	case LevelInfo:
+		log.Info(msg, fields...)
+	case LevelDebug:
+		log.Debug(msg, fields...)
 	default:
-		logger.L().Debug(msg, fields...)
+		log.Error(msg, fields...)
 	}
 }
