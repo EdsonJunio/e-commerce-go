@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Product represents the product aggregate persisted in the database.
 type Product struct {
 	ID             int            `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Name           string         `gorm:"column:name;not null" json:"name"`
@@ -24,7 +23,6 @@ type Product struct {
 	DeletedReason  string         `gorm:"column:deleted_reason" json:"deleted_reason"`
 }
 
-// TableName sets the table name for GORM.
 func (Product) TableName() string {
 	return "products"
 }
@@ -92,7 +90,6 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id int) error
 }
 
-// ProductService defines the business logic contract for Product.
 type ProductService interface {
 	ListProducts(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Product, int64, error)
 	GetProductByID(ctx context.Context, id int) (*Product, error)

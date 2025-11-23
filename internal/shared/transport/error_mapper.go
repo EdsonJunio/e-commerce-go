@@ -37,7 +37,8 @@ func HTTPErrorMapper(err error) HTTPErrorMapping {
 	switch {
 	// 404 Not Found Group
 	case errors.Is(err, domain.ErrCategoryNotFound),
-		errors.Is(err, domain.ErrProductNotFound):
+		errors.Is(err, domain.ErrProductNotFound),
+		errors.Is(err, domain.ErrParentCategoryNotFound):
 		return mappingNotFound
 
 	// 409 Conflict Group
@@ -50,7 +51,10 @@ func HTTPErrorMapper(err error) HTTPErrorMapping {
 		errors.Is(err, domain.ErrInvalidProductID),
 		errors.Is(err, domain.ErrInvalidCategoryReference),
 		errors.Is(err, domain.ErrProductSlugRequired),
-		errors.Is(err, domain.ErrProductNameRequired):
+		errors.Is(err, domain.ErrProductNameRequired),
+		errors.Is(err, domain.ErrInvalidCategoryID),
+		errors.Is(err, domain.ErrCategoryNameRequired),
+		errors.Is(err, domain.ErrCategorySlugRequired):
 		return mappingInvalidRequest
 
 	// Default 500

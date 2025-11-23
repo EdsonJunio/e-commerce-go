@@ -1,12 +1,13 @@
 package domain
 
 import (
+	"context"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// Category represents the category aggregate persisted in the database.
 type Category struct {
 	ID            int            `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Name          string         `gorm:"column:name;not null" json:"name"`
@@ -20,25 +21,58 @@ type Category struct {
 	DeletedReason string         `gorm:"column:deleted_reason" json:"deleted_reason"`
 }
 
-// TableName sets the table name for GORM.
 func (Category) TableName() string { return "categories" }
 
-// CategoryRepository defines the DB acess contract for Category
-type CategoryRepository interface {
-	List(limit, offset int, filters map[string]interface{}) ([]Category, int64, error)
-	FindByID(id int) (*Category, error)
-	FindBySlug(slug string) (*Category, error)
-	Create(category *Category) error
-	Update(category *Category) error
-	Delete(id int) error
+func (c *Category) Validate() error {
+	c.Name = strings.TrimSpace(c.Name)
+	c.Slug = strings.TrimSpace(c.Slug)
+	c.Description = strings.TrimSpace(c.Description)
+
+	if c.Name == "" {
+		return ErrCategoryNameRequired
+	}
+	if c.Slug == "" {
+		return ErrCategorySlugRequired
+	}
+	if c.Description == "" {
+		return ErrCategoryDescriptionRequired
+	}
+
+	return nil
 }
 
-// CategoryService defines the business logic contract for Category
+func (c *Category) UpdateState(newData *Category) {
+	if newData.Name != "" {
+		c.Name = strings.TrimSpace(newData.Name)
+	}
+	if newData.Slug != "" {
+		c.Slug = strings.TrimSpace(newData.Slug)
+	}
+	if newData.Description != "" {
+		c.Description = strings.TrimSpace(newData.Description)
+	}
+
+	if newData.ParentID != nil {
+		c.ParentID = newData.ParentID
+	}
+
+	c.IsActive = newData.IsActive
+}
+
+type CategoryRepository interface {
+	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]Category, int64, error)
+	FindByID(ctx context.Context, id int) (*Category, error)
+	FindBySlug(ctx context.Context, slug string) (*Category, error)
+	Create(ctx context.Context, category *Category) error
+	Update(ctx context.Context, category *Category) error
+	Delete(ctx context.Context, id int) error
+}
+
 type CategoryService interface {
-	ListCategories(p Pagination, filters map[string]interface{}) ([]Category, int64, error)
-	GetCategoryByID(id int) (*Category, error)
-	GetCategoryBySlug(slug string) (*Category, error)
-	CreateCategory(category *Category) error
-	UpdateCategory(id int, category *Category) error
-	DeleteCategory(id int) error
+	ListCategories(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Category, int64, error)
+	GetCategoryByID(ctx context.Context, id int) (*Category, error)
+	GetCategoryBySlug(ctx context.Context, slug string) (*Category, error)
+	CreateCategory(ctx context.Context, category *Category) error
+	UpdateCategory(ctx context.Context, id int, category *Category) error
+	DeleteCategory(ctx context.Context, id int) error
 }

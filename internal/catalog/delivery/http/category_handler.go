@@ -19,10 +19,10 @@ type CategoryHandler struct {
 
 type createCategoryRequest struct {
 	Name        string `json:"name" binding:"required,min=3,max=255"`
-	Slug        string `json:"slug" binding:"required,min=3,max=255"`
-	Description string `json:"description"`
+	Slug        string `json:"slug" binding:"required"`
+	ParentID    *int   `json:"parent_id"`
 	IsActive    bool   `json:"is_active"`
-	ParentID    *uint  `json:"parent_id,omitempty"`
+	Description string `json:"description"`
 }
 
 type updateCategoryRequest struct {
@@ -70,7 +70,7 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		}
 	}
 
-	categories, total, err := h.service.ListCategories(pagination, filters)
+	categories, total, err := h.service.ListCategories(c.Request.Context(), pagination, filters)
 	if err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
@@ -78,14 +78,26 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 			mapping,
 			"failed to list categories",
 			err,
+			zap.Int("page", page),
+			zap.Int("limit", limit),
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(categories, total, pagination.Page, pagination.Limit, c.Request.URL.Path))
+	logger.L().Info("products listed successfully",
+		zap.Int("page", page),
+		zap.Int("limit", limit),
+		zap.Int64("total", total),
+		zap.String("request_id", reqID))
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(categories, total, page, limit, c.Request.URL.Path))
 }
 
 func (h *CategoryHandler) GetCategory(c *gin.Context) {
@@ -103,7 +115,7 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 		return
 	}
 
-	category, err := h.service.GetCategoryByID(id)
+	category, err := h.service.GetCategoryByID(c.Request.Context(), id)
 	if err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
@@ -115,7 +127,12 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 
@@ -132,12 +149,16 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
 	if slug == "" {
-		logger.L().Warn("empty slug in GetCategoryBySlug", zap.String("request_id", reqID))
+		logger.L().Warn(
+			"empty slug in GetCategoryBySlug",
+			zap.String("request_id", reqID),
+		)
+
 		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "category slug is required"))
 		return
 	}
 
-	categorySlug, err := h.service.GetCategoryBySlug(slug)
+	categorySlug, err := h.service.GetCategoryBySlug(c.Request.Context(), slug)
 	if err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
@@ -148,7 +169,12 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 
@@ -160,30 +186,20 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 	var req createCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.L().Warn(
-			"invalid request in CreateCategory",
-			zap.Error(err),
-			zap.String("request_id", reqID),
-		)
+		logger.L().Warn("invalid request in CreateCategory", zap.Error(err), zap.String("request_id", reqID))
 		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
 		return
-	}
-
-	var parentID *int
-	if req.ParentID != nil {
-		id := int(*req.ParentID)
-		parentID = &id
 	}
 
 	category := &domain.Category{
 		Name:        strings.TrimSpace(req.Name),
 		Slug:        strings.TrimSpace(req.Slug),
 		IsActive:    req.IsActive,
-		ParentID:    parentID,
+		ParentID:    req.ParentID,
 		Description: strings.TrimSpace(req.Description),
 	}
 
-	if err := h.service.CreateCategory(category); err != nil {
+	if err := h.service.CreateCategory(c.Request.Context(), category); err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
 		transport.LogByErrorMapping(
@@ -194,7 +210,12 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 
@@ -248,7 +269,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		updateData.Description = *req.Description
 	}
 
-	if err := h.service.UpdateCategory(id, updateData); err != nil {
+	if err := h.service.UpdateCategory(c.Request.Context(), id, updateData); err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
 		transport.LogByErrorMapping(
@@ -259,25 +280,16 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 
-	updatedCategory, err := h.service.GetCategoryByID(id)
-	if err != nil {
-		mapping := transport.HTTPErrorMapper(err)
-
-		transport.LogByErrorMapping(
-			mapping,
-			"failed to fetch updated category",
-			err,
-			zap.Int("id", id),
-			zap.String("request_id", reqID),
-		)
-
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
-		return
-	}
+	updatedCategory, _ := h.service.GetCategoryByID(c.Request.Context(), id)
 
 	logger.L().Info(
 		"category updated successfully",
@@ -303,7 +315,7 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteCategory(id); err != nil {
+	if err := h.service.DeleteCategory(c.Request.Context(), id); err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
 		transport.LogByErrorMapping(
@@ -314,7 +326,12 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 			zap.String("request_id", reqID),
 		)
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, err.Error()))
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
 		return
 	}
 

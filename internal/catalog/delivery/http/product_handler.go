@@ -122,7 +122,10 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 	if err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
-		transport.LogByErrorMapping(mapping, "failed to get product by ID", err,
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to get product by ID",
+			err,
 			zap.Int("id", id),
 			zap.String("request_id", reqID))
 
@@ -137,7 +140,8 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 
 	logger.L().Info("product retrieved by ID",
 		zap.Int("id", id),
-		zap.String("request_id", reqID))
+		zap.String("request_id", reqID),
+	)
 	c.JSON(http.StatusOK, product)
 }
 
@@ -146,8 +150,11 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
 	if slug == "" {
-		logger.L().Warn("empty slug in GetProductBySlug",
-			zap.String("request_id", reqID))
+		logger.L().Warn(
+			"empty slug in GetProductBySlug",
+			zap.String("request_id", reqID),
+		)
+
 		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "product slug is required"))
 		return
 	}
@@ -159,7 +166,8 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 		transport.LogByErrorMapping(mapping, "failed to get product by slug",
 			err,
 			zap.String("slug", slug),
-			zap.String("request_id", reqID))
+			zap.String("request_id", reqID),
+		)
 
 		msg := err.Error()
 		if mapping.HTTPCode == http.StatusInternalServerError {
@@ -341,7 +349,8 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	logger.L().Info("product deleted successfully",
+	logger.L().Info(
+		"product deleted successfully",
 		zap.Int("id", id),
 		zap.String("request_id", reqID))
 	c.Status(http.StatusNoContent)
