@@ -79,5 +79,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(Green + "\n✅ All tests passed! Proceeding with commit..." + Reset)
+	fmt.Println(Green + "\n✅ All tests passed! Proceeding with commitv..." + Reset)
 }
