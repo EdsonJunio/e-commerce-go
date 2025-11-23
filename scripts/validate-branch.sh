@@ -1,3 +1,4 @@
+cat <<'EOF' > scripts/validate-branch.sh
 #!/bin/bash
 
 # Define colors for output
@@ -8,16 +9,33 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
-pattern="^(main|develop|(feature|bugfix|hotfix)\/.+)$"
+
+# 1. PROTECTED BRANCHES CHECK
+# Bloqueia commits diretos na main e develop
+if [[ "$current_branch" == "main" || "$current_branch" == "develop" ]]; then
+    echo "---------------------------------------------------"
+    echo -e "${RED}Error: Direct push to protected branch '${current_branch}' is prohibited.${NC}"
+    echo ""
+    echo "You cannot push code directly to production or development branches."
+    echo "Please create a new branch and open a Pull Request."
+    echo ""
+    echo -e "Command to fix: ${YELLOW}git checkout -b feature/my-new-feature${NC}"
+    echo "---------------------------------------------------"
+    exit 1
+fi
+
+# 2. NAMING CONVENTION CHECK
+# Removemos main e develop do padrão aceito para push
+pattern="^((feature|bugfix|hotfix)\/.+)$"
 
 if [[ ! $current_branch =~ $pattern ]]; then
+    echo "---------------------------------------------------"
     echo -e "${RED}Error: Invalid branch name detected.${NC}"
     echo "Current branch: '$current_branch'"
     echo ""
     echo "The branch name does not follow the project's naming conventions."
     echo ""
     echo "Allowed patterns:"
-    echo -e "  - ${GREEN}main${NC}, ${GREEN}develop${NC}"
     echo -e "  - ${GREEN}feature/${NC}${CYAN}<name>${NC}"
     echo -e "  - ${GREEN}bugfix/${NC}${CYAN}<name>${NC}"
     echo -e "  - ${GREEN}hotfix/${NC}${CYAN}<name>${NC}"
@@ -30,3 +48,4 @@ if [[ ! $current_branch =~ $pattern ]]; then
 fi
 
 exit 0
+EOF
