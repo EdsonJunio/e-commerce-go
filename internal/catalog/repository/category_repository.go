@@ -1,8 +1,10 @@
 package repository
 
 import (
-	"e-commerce-go/internal/catalog/domain"
+	"context"
 	"errors"
+
+	"e-commerce-go/internal/catalog/domain"
 
 	"gorm.io/gorm"
 )
@@ -12,23 +14,31 @@ type categoryRepository struct {
 }
 
 // NewCategoryRepository returns a new category repository backed by GORM.
-// The caller is responsible for managing the lifecycle of db.
 func NewCategoryRepository(db *gorm.DB) domain.CategoryRepository {
 	return &categoryRepository{db: db}
 }
 
-func (r *categoryRepository) List(limit, offset int, filters map[string]interface{}) ([]domain.Category, int64, error) {
+func (r *categoryRepository) List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]domain.Category, int64, error) {
 	var categories []domain.Category
 	var total int64
 
-	tx := r.db.Model(&domain.Category{})
-	for key, value := range filters {
-		tx = tx.Where(key, value)
+	tx := r.db.WithContext(ctx).Model(&domain.Category{})
+
+	if name, ok := filters["name"]; ok {
+		tx = tx.Where("name = ?", name)
+	}
+	if active, ok := filters["is_active"]; ok {
+		tx = tx.Where("is_active = ?", active)
+	}
+	if parentID, ok := filters["parent_id"]; ok {
+		tx = tx.Where("parent_id = ?", parentID)
 	}
 
 	if err := tx.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
+
+	tx = tx.Order("id DESC")
 
 	if err := tx.Offset(offset).Limit(limit).Find(&categories).Error; err != nil {
 		return nil, 0, err
@@ -37,14 +47,13 @@ func (r *categoryRepository) List(limit, offset int, filters map[string]interfac
 	return categories, total, nil
 }
 
-func (r categoryRepository) FindByID(id int) (*domain.Category, error) {
+func (r *categoryRepository) FindByID(ctx context.Context, id int) (*domain.Category, error) {
 	var category domain.Category
-	err := r.db.First(&category, id).Error
+	err := r.db.WithContext(ctx).First(&category, id).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrCategoryNotFound
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +61,12 @@ func (r categoryRepository) FindByID(id int) (*domain.Category, error) {
 	return &category, nil
 }
 
-func (r categoryRepository) FindBySlug(slug string) (*domain.Category, error) {
+func (r *categoryRepository) FindBySlug(ctx context.Context, slug string) (*domain.Category, error) {
 	var category domain.Category
-	err := r.db.Where("slug = ?", slug).First(&category).Error
+	err := r.db.WithContext(ctx).Where("slug = ?", slug).First(&category).Error
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+		return nil, domain.ErrCategoryNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -64,8 +74,8 @@ func (r categoryRepository) FindBySlug(slug string) (*domain.Category, error) {
 	return &category, nil
 }
 
-func (r categoryRepository) Create(category *domain.Category) error {
-	err := r.db.Create(category).Error
+func (r *categoryRepository) Create(ctx context.Context, category *domain.Category) error {
+	err := r.db.WithContext(ctx).Create(category).Error
 	if err != nil {
 		if isUniqueViolation(err) {
 			return domain.ErrCategorySlugExists
@@ -75,45 +85,26 @@ func (r categoryRepository) Create(category *domain.Category) error {
 	return nil
 }
 
-func (r categoryRepository) Update(category *domain.Category) error {
-	if category.ID == 0 {
-		return gorm.ErrRecordNotFound
-	}
+func (r *categoryRepository) Update(ctx context.Context, category *domain.Category) error {
+	err := r.db.WithContext(ctx).Save(category).Error
 
-	tx := r.db.Model(category).Updates(map[string]interface{}{
-		"name":        category.Name,
-		"slug":        category.Slug,
-		"parent_id":   category.ParentID,
-		"is_active":   category.IsActive,
-		"description": category.Description,
-	})
-
-	if tx.Error != nil {
-		if isUniqueViolation(tx.Error) {
-			return domain.ErrCategorySlugRequired
+	if err != nil {
+		if isUniqueViolation(err) {
+			return domain.ErrCategorySlugExists
 		}
-		return tx.Error
+		return err
 	}
-
-	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
 	return nil
 }
 
-func (r categoryRepository) Delete(id int) error {
-	if id <= 0 {
-		return gorm.ErrRecordNotFound
-	}
+func (r *categoryRepository) Delete(ctx context.Context, id int) error {
+	res := r.db.WithContext(ctx).Delete(&domain.Category{}, id)
 
-	tx := r.db.Unscoped().Delete(&domain.Category{}, id)
-	if tx.Error != nil {
-		return tx.Error
+	if res.Error != nil {
+		return res.Error
 	}
-
-	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+	if res.RowsAffected == 0 {
+		return domain.ErrCategoryNotFound
 	}
 
 	return nil

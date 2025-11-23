@@ -1,34 +1,38 @@
 package service
 
 import (
+	"context"
 	"e-commerce-go/internal/catalog/domain"
 	"errors"
-	"gorm.io/gorm"
 )
 
 type categoryService struct {
 	repo domain.CategoryRepository
 }
 
-// NewCategoryService returns a new instance of categoryService implementing domain.CategoryRepository.
-func NewCategoryService(repo domain.CategoryRepository) domain.CategoryService {
+// NewCategoryService returns a new instance of categoryService.
+func NewCategoryService(
+	repo domain.CategoryRepository) domain.CategoryService {
 	return &categoryService{repo: repo}
 }
 
-func (s *categoryService) ListCategories(p domain.Pagination, filters map[string]interface{}) ([]domain.Category, int64, error) {
-	return s.repo.List(p.Limit, p.Offset, filters)
+func (s *categoryService) ListCategories(ctx context.Context, p domain.Pagination, filters map[string]interface{}) ([]domain.Category, int64, error) {
+	return s.repo.List(ctx, p.Limit, p.Offset, filters)
 }
 
-func (s categoryService) GetCategoryByID(id int) (*domain.Category, error) {
-	if id <= 0 {
-		return nil, domain.ErrInvalidCategoryID
+func (s *categoryService) GetCategoryByID(ctx context.Context, id int) (*domain.Category, error) {
+	return s.findCategoryOrFail(ctx, id)
+}
+
+func (s *categoryService) GetCategoryBySlug(ctx context.Context, slug string) (*domain.Category, error) {
+	if slug == "" {
+		return nil, domain.ErrCategoryDescriptionRequired
 	}
 
-	category, err := s.repo.FindByID(id)
+	category, err := s.repo.FindBySlug(ctx, slug)
 	if err != nil {
 		return nil, err
 	}
-
 	if category == nil {
 		return nil, domain.ErrCategoryNotFound
 	}
@@ -36,105 +40,79 @@ func (s categoryService) GetCategoryByID(id int) (*domain.Category, error) {
 	return category, nil
 }
 
-func (s categoryService) GetCategoryBySlug(slug string) (*domain.Category, error) {
-	if slug == "" {
-		return nil, domain.ErrCategoryDescriptionRequired
-	}
-
-	categorySlug, err := s.repo.FindBySlug(slug)
-	if err != nil {
-		return nil, err
-	}
-
-	if categorySlug == nil {
-		return nil, domain.ErrCategoryNotFound
-	}
-
-	return categorySlug, nil
-}
-
-func (s categoryService) CreateCategory(category *domain.Category) error {
-	if category.Name == "" {
-		return domain.ErrCategoryNameRequired
-	}
-	if category.Slug == "" {
-		return domain.ErrCategorySlugRequired
-	}
-	if category.Description == "" {
-		return domain.ErrCategoryDescriptionRequired
-	}
-
-	existing, err := s.repo.FindBySlug(category.Slug)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+func (s *categoryService) CreateCategory(ctx context.Context, category *domain.Category) error {
+	if err := category.Validate(); err != nil {
 		return err
-	}
-	if existing != nil {
-		return domain.ErrCategorySlugExists
 	}
 
 	if category.ParentID != nil && *category.ParentID > 0 {
-		parent, err := s.repo.FindByID(*category.ParentID)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := s.ensureParentExists(ctx, *category.ParentID); err != nil {
+			if errors.Is(err, domain.ErrCategoryNotFound) {
+				return domain.ErrParentCategoryNotFound
+			}
 			return err
 		}
-		if parent == nil {
-			return domain.ErrParentCategoryNotFound
-		}
 	} else {
-		var zeroID int
-		category.ParentID = &zeroID
+		category.ParentID = nil
 	}
 
-	return s.repo.Create(category)
+	return s.repo.Create(ctx, category)
 }
 
-func (s categoryService) UpdateCategory(id int, category *domain.Category) error {
-	if id <= 0 {
-		return domain.ErrInvalidCategoryID
-	}
-
-	existing, err := s.repo.FindByID(id)
+func (s *categoryService) UpdateCategory(ctx context.Context, id int, req *domain.Category) error {
+	existing, err := s.findCategoryOrFail(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if existing == nil {
-		return domain.ErrCategoryNotFound
-	}
+	existing.UpdateState(req)
 
-	if category.Name != "" {
-		existing.Name = category.Name
-	}
-	if category.Slug != "" {
-		existing.Slug = category.Slug
-	}
-	if category.ParentID != nil {
-		existing.ParentID = category.ParentID
-	}
-	if category.Description != "" {
-		existing.Description = category.Description
-	}
-
-	if category.IsActive != existing.IsActive {
-		existing.IsActive = category.IsActive
-	}
-
-	return s.repo.Update(existing)
-}
-
-func (s categoryService) DeleteCategory(id int) error {
-	if id <= 0 {
-		return domain.ErrInvalidCategoryID
-	}
-
-	existing, err := s.repo.FindByID(id)
-	if err != nil {
+	if err := existing.Validate(); err != nil {
 		return err
 	}
 
-	if existing == nil {
-		return domain.ErrCategoryNotFound
+	if req.ParentID != nil && *req.ParentID > 0 {
+		if *req.ParentID == id {
+			return domain.ErrInvalidCategoryReference
+		}
+		if err := s.ensureParentExists(ctx, *req.ParentID); err != nil {
+			return err
+		}
 	}
 
-	return s.repo.Delete(id)
+	return s.repo.Update(ctx, existing)
+}
+
+func (s *categoryService) DeleteCategory(ctx context.Context, id int) error {
+	if _, err := s.findCategoryOrFail(ctx, id); err != nil {
+		return err
+	}
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *categoryService) findCategoryOrFail(ctx context.Context, id int) (*domain.Category, error) {
+	if id <= 0 {
+		return nil, domain.ErrInvalidCategoryID
+	}
+
+	category, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if category == nil {
+		return nil, domain.ErrCategoryNotFound
+	}
+
+	return category, nil
+}
+
+func (s *categoryService) ensureParentExists(ctx context.Context, parentID int) error {
+	parent, err := s.repo.FindByID(ctx, parentID)
+	if err != nil {
+		return err
+	}
+	if parent == nil {
+		return domain.ErrParentCategoryNotFound
+	}
+	return nil
 }

@@ -101,7 +101,7 @@ func (s *productService) findProductOrFail(ctx context.Context, id int) (*domain
 }
 
 func (s *productService) ensureCategoryExists(ctx context.Context, categoryID int) error {
-	_, err := s.cate.FindByID(categoryID)
+	_, err := s.cate.FindByID(ctx, categoryID)
 
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryNotFound) {

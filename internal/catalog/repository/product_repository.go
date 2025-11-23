@@ -6,7 +6,6 @@ import (
 
 	"e-commerce-go/internal/catalog/domain"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -107,12 +106,4 @@ func (r *productRepository) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
-}
-
-func isUniqueViolation(err error) bool {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "23505"
-	}
-	return false
 }

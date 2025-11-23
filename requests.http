@@ -76,7 +76,7 @@ GET {{baseUrl}}/categories/1
 Content-Type: application/json
 
 ### Get category by slug
-GET {{baseUrl}}/categories/slug/electronics
+GET {{baseUrl}}/categories/slug/moda
 Content-Type: application/json
 
 ### Create a sub-category (with parent)
@@ -85,15 +85,16 @@ Content-Type: application/json
 
 {
   "name": "Laptops",
-  "slug": "laptops",
+  "slug": "36",
   "description": "Laptop computers and accessories",
   "is_active": true,
   "parent_id": 1
+
 }
 
 ### Update a category (partial update)
 # Only include fields that need to be updated
-PUT {{baseUrl}}/categories/1
+PUT {{baseUrl}}/categories/0
 Content-Type: application/json
 
 {
@@ -102,7 +103,7 @@ Content-Type: application/json
 }
 
 ### Toggle category active status
-PUT {{baseUrl}}/categories/2
+PUT {{baseUrl}}/categories/
 Content-Type: application/json
 
 {
@@ -110,7 +111,7 @@ Content-Type: application/json
 }
 
 ### Change category parent
-PUT {{baseUrl}}/categories/2
+PUT {{baseUrl}}/categories/
 Content-Type: application/json
 
 {
@@ -118,7 +119,7 @@ Content-Type: application/json
 }
 
 ### Delete a category
-DELETE {{baseUrl}}/categories/3
+DELETE {{baseUrl}}/categories/9
 Content-Type: application/json
 
 ### Try to delete a category with subcategories (should fail)
