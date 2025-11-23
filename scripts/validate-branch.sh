@@ -10,7 +10,6 @@ NC='\033[0m' # No Color
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 # 1. PROTECTED BRANCHES CHECK
-# Bloqueia commits diretos na main e develop
 if [[ "$current_branch" == "main" || "$current_branch" == "develop" ]]; then
     echo "---------------------------------------------------"
     echo -e "${RED}Error: Direct push to protected branch '${current_branch}' is prohibited.${NC}"
@@ -24,7 +23,6 @@ if [[ "$current_branch" == "main" || "$current_branch" == "develop" ]]; then
 fi
 
 # 2. NAMING CONVENTION CHECK
-# Removemos main e develop do padrão aceito para push
 pattern="^((feature|bugfix|hotfix)\/.+)$"
 
 if [[ ! $current_branch =~ $pattern ]]; then
