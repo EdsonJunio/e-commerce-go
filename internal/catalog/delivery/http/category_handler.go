@@ -240,7 +240,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	var req updateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.L().Warn(
-			"invalid request body in UpdateCategory",
+			"invalid request body in updateCategory",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
