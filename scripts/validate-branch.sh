@@ -1,4 +1,3 @@
-cat <<'EOF' > scripts/validate-branch.sh
 #!/bin/bash
 
 # Define colors for output
@@ -48,4 +47,3 @@ if [[ ! $current_branch =~ $pattern ]]; then
 fi
 
 exit 0
-EOF
