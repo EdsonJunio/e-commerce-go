@@ -229,7 +229,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		logger.L().Warn(
-			"invalid category ID in UpdateCategory",
+			"invalid category ID in updateCategory",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
