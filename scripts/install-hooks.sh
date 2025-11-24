@@ -2,31 +2,81 @@
 
 # Define colors
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo "🔧 Setting up Git Hooks..."
 
-# 1. Setup Commit-Msg Hook
-echo "#!/bin/bash" > .git/hooks/commit-msg
-echo "./scripts/validate-commit.sh \"\$1\"" >> .git/hooks/commit-msg
-chmod +x .git/hooks/commit-msg
-echo -e "✅ ${GREEN}commit-msg hook installed.${NC}"
+# 1. Find git root
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 
-# 2. Setup Pre-Commit Hook
-echo "#!/bin/bash" > .git/hooks/pre-commit
-echo "./scripts/run-tests.sh" >> .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-echo -e "✅ ${GREEN}pre-commit hook installed.${NC}"
+if [ -z "$GIT_ROOT" ]; then
+    echo -e "${RED}Error: Not a git repository or git command failed.${NC}"
+    exit 1
+fi
 
-# 3. Setup Pre-Push Hook
-echo "#!/bin/bash" > .git/hooks/pre-push
-echo "./scripts/validate-branch.sh" >> .git/hooks/pre-push
-chmod +x .git/hooks/pre-push
-echo -e "✅ ${GREEN}pre-push hook installed.${NC}"
+HOOKS_DIR="$GIT_ROOT/.git/hooks"
+SCRIPTS_DIR="$GIT_ROOT/scripts"
 
-# 4. Configure Git to use local hooks (just in case)
+# Validate scripts directory
+if [ ! -d "$SCRIPTS_DIR" ]; then
+    echo -e "${RED}Error: Scripts directory not found at $SCRIPTS_DIR${NC}"
+    exit 1
+fi
+
+# --- Make scripts executable ---
+echo "⚙️  Making scripts executable..."
+if ls "$SCRIPTS_DIR"/*.sh 1> /dev/null 2>&1; then
+    chmod +x "$SCRIPTS_DIR"/*.sh
+else
+    echo -e "${RED}Warning: No .sh files found in scripts directory.${NC}"
+fi
+# ------------------------------------------------
+
+# Function to safely create hook
+create_hook() {
+    local hook_name=$1
+    local script_name=$2
+    local hook_path="$HOOKS_DIR/$hook_name"
+
+    echo "#!/bin/bash" > "$hook_path"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to create $hook_name hook.${NC}"
+        exit 1
+    fi
+
+    echo "$SCRIPTS_DIR/$script_name \"\$1\"" >> "$hook_path"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to write to $hook_name hook.${NC}"
+        exit 1
+    fi
+
+    chmod +x "$hook_path"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to make $hook_name hook executable.${NC}"
+        rm -f "$hook_path"
+        exit 1
+    fi
+
+    echo -e "✅ ${GREEN}$hook_name hook installed.${NC}"
+}
+
+# 2. Setup Hooks
+
+# ✅ Commit Messages
+create_hook "commit-msg" "validate-commit.sh"
+
+# ✅ Tests (ENABLED for this project)
+create_hook "pre-commit" "run-tests.sh"
+
+# ✅ Branch Validation
+create_hook "pre-push" "validate-branch.sh"
+
+# 3. Configure Git hooks path
 git config core.hooksPath .git/hooks
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Warning: Failed to configure git hooks path.${NC}"
+fi
 
 echo "------------------------------------------------"
 echo -e "🎉 ${GREEN}Git hooks configured successfully!${NC}"
-echo "   You are now protected by the project's quality standards."

@@ -11,8 +11,15 @@ BOLD='\033[1m'
 echo -e "${BOLD}Running Unit Tests & Coverage Check...${NC}"
 echo "---------------------------------------------------"
 
-TEMP_LOG=$(mktemp)
-COVERAGE_FILE=$(mktemp)
+TEMP_LOG=$(mktemp) || { echo -e "${RED}Error: Failed to create temp file${NC}"; exit 1; }
+COVERAGE_FILE=$(mktemp) || { echo -e "${RED}Error: Failed to create coverage file${NC}"; exit 1; }
+
+# Check if go is installed
+if ! command -v go &> /dev/null; then
+    echo -e "${RED}Error: Go is not installed or not in PATH.${NC}"
+    rm "$TEMP_LOG" "$COVERAGE_FILE"
+    exit 1
+fi
 
 go test ./... -covermode=atomic -coverprofile="$COVERAGE_FILE" > "$TEMP_LOG" 2>&1
 TEST_EXIT_CODE=$?
@@ -26,8 +33,11 @@ while IFS= read -r line; do
         ((PASS_COUNT++))
         pkg=$(echo "$line" | awk '{print $2}')
         time=$(echo "$line" | awk '{print $3}')
+
+        # Try to extract coverage if available
         cov=$(echo "$line" | grep -o "coverage: [0-9.]*%" | awk '{print $2}')
-        if [ -z "$cov" ]; then cov="?"; fi
+        if [ -z "$cov" ]; then cov="N/A"; fi
+
         echo -e "${GREEN}[PASS]${NC} $pkg ($time) - Cov: $cov"
     elif [[ $line == "?"* ]]; then
         ((SKIP_COUNT++))
@@ -38,10 +48,12 @@ while IFS= read -r line; do
     fi
 done < "$TEMP_LOG"
 
+TOTAL_COVERAGE="0.0%"
 if [ -s "$COVERAGE_FILE" ]; then
-    TOTAL_COVERAGE=$(go tool cover -func="$COVERAGE_FILE" | grep "total:" | awk '{print $3}')
-else
-    TOTAL_COVERAGE="0.0%"
+    COVERAGE_OUTPUT=$(go tool cover -func="$COVERAGE_FILE" 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        TOTAL_COVERAGE=$(echo "$COVERAGE_OUTPUT" | grep "total:" | awk '{print $3}')
+    fi
 fi
 
 echo "---------------------------------------------------"

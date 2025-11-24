@@ -7,7 +7,18 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+if [ -z "$1" ]; then
+    echo -e "${RED}Error: Commit message file not provided.${NC}"
+    exit 1
+fi
+
 commit_msg_file=$1
+
+if [ ! -f "$commit_msg_file" ]; then
+    echo -e "${RED}Error: Cannot read commit message file: $commit_msg_file${NC}"
+    exit 1
+fi
+
 commit_msg=$(head -n 1 "$commit_msg_file")
 types="(feat|fix|docs|style|refactor|test|chore|build|ci|perf)"
 pattern="^$types(\([a-z0-9\-\_]+\))?!?: .+$"
