@@ -139,3 +139,11 @@ test:
 clean:
 	@rm -rf ./coverage
 	@go clean -testcache
+
+
+.PHONY: docs
+docs:
+	@echo "Generating Swagger documentation..."
+	@# --parseDependency: Lê arquivos do GORM e outras libs externas
+	@# --parseInternal: Garante que leia seus pacotes internal
+	@swag init -g cmd/api/docs.go --output docs --parseDependency --parseInternal

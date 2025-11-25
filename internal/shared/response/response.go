@@ -8,12 +8,16 @@ import (
 )
 
 // ErrorResponse represents a standardized error response.
+// @Description Estrutura padrão para retorno de erros da API
 type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	// Código interno do erro (ex: "INVALID_INPUT", "NOT_FOUND")
+	Code string `json:"code" example:"INVALID_INPUT"`
+	// Mensagem descritiva para o usuário
+	Message string `json:"message" example:"The field 'email' is required"`
 }
 
 // PaginatedResponse represents a paginated response.
+// @Description Estrutura padrão para listas paginadas
 type PaginatedResponse struct {
 	Data       interface{} `json:"data"`
 	Pagination Pagination  `json:"pagination"`
@@ -21,13 +25,13 @@ type PaginatedResponse struct {
 
 // Pagination contains pagination details.
 type Pagination struct {
-	Total   int64  `json:"total"`
-	Page    int    `json:"page"`
-	Limit   int    `json:"limit"`
-	Pages   int    `json:"pages"`
-	HasMore bool   `json:"has_more"`
-	NextURL string `json:"next_url,omitempty"`
-	PrevURL string `json:"prev_url,omitempty"`
+	Total   int64  `json:"total" example:"100"`
+	Page    int    `json:"page" example:"1"`
+	Limit   int    `json:"limit" example:"10"`
+	Pages   int    `json:"pages" example:"10"`
+	HasMore bool   `json:"has_more" example:"true"`
+	NextURL string `json:"next_url,omitempty" example:"/api/v1/resource?page=2&limit=10"`
+	PrevURL string `json:"prev_url,omitempty" example:""`
 }
 
 // NewErrorResponse creates a new error response.
