@@ -133,7 +133,7 @@ func Load() *Config {
 		Environment: getEnvString("APP_ENVIRONMENT", "development"),
 
 		Server: ServerConfig{
-			Port:            getEnvString("SERVER_PORT", "8080"),
+			Port:            getEnvString("SERVER_PORT", "8081"),
 			ReadTimeout:     getEnvDuration("SERVER_READ_TIMEOUT", 15*time.Second),
 			WriteTimeout:    getEnvDuration("SERVER_WRITE_TIMEOUT", 15*time.Second),
 			IdleTimeout:     getEnvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),

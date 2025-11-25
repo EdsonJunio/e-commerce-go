@@ -1,0 +1,632 @@
+basePath: /api/v1
+definitions:
+  e-commerce-go_internal_catalog_domain.Category:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      deleted_reason:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  e-commerce-go_internal_catalog_domain.Product:
+    properties:
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      deleted_reason:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      seo_description:
+        type: string
+      seo_title:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  e-commerce-go_internal_shared_response.ErrorResponse:
+    description: Estrutura padrão para retorno de erros da API
+    properties:
+      code:
+        description: 'Código interno do erro (ex: "INVALID_INPUT", "NOT_FOUND")'
+        example: INVALID_INPUT
+        type: string
+      message:
+        description: Mensagem descritiva para o usuário
+        example: The field 'email' is required
+        type: string
+    type: object
+  e-commerce-go_internal_shared_response.PaginatedResponse:
+    description: Estrutura padrão para listas paginadas
+    properties:
+      data: {}
+      pagination:
+        $ref: '#/definitions/e-commerce-go_internal_shared_response.Pagination'
+    type: object
+  e-commerce-go_internal_shared_response.Pagination:
+    properties:
+      has_more:
+        example: true
+        type: boolean
+      limit:
+        example: 10
+        type: integer
+      next_url:
+        example: /api/v1/resource?page=2&limit=10
+        type: string
+      page:
+        example: 1
+        type: integer
+      pages:
+        example: 10
+        type: integer
+      prev_url:
+        example: ""
+        type: string
+      total:
+        example: 100
+        type: integer
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  internal_catalog_delivery_http.CreateCategoryRequest:
+    properties:
+      description:
+        example: All kinds of electronic devices
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: Electronics
+        maxLength: 255
+        minLength: 3
+        type: string
+      parent_id:
+        example: 1
+        type: integer
+      slug:
+        example: electronics
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  internal_catalog_delivery_http.CreateProductRequest:
+    properties:
+      category_id:
+        example: 1
+        minimum: 1
+        type: integer
+      description:
+        example: Titanium design, A17 Pro chip
+        maxLength: 255
+        minLength: 3
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: iPhone 15 Pro
+        maxLength: 255
+        minLength: 3
+        type: string
+      seoDescription:
+        example: The new iPhone 15 Pro
+        maxLength: 255
+        minLength: 3
+        type: string
+      seoTitle:
+        example: iPhone 15 Pro - Apple
+        maxLength: 255
+        minLength: 3
+        type: string
+      slug:
+        example: iphone-15-pro
+        type: string
+    required:
+    - category_id
+    - description
+    - is_active
+    - name
+    - seoDescription
+    - seoTitle
+    - slug
+    type: object
+  internal_catalog_delivery_http.UpdateCategoryRequest:
+    properties:
+      description:
+        example: Updated description
+        type: string
+      is_active:
+        example: false
+        type: boolean
+      name:
+        example: Home Appliances
+        type: string
+      parent_id:
+        example: 2
+        type: integer
+      slug:
+        example: home-appliances
+        type: string
+    type: object
+  internal_catalog_delivery_http.UpdateProductRequest:
+    properties:
+      category_id:
+        example: 2
+        type: integer
+      description:
+        example: Updated description
+        type: string
+      is_active:
+        example: false
+        type: boolean
+      name:
+        example: iPhone 15 Pro Max
+        type: string
+      seoDescription:
+        example: New SEO Desc
+        type: string
+      seoTitle:
+        example: New SEO Title
+        type: string
+      slug:
+        example: iphone-15-pro-max
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@test.com
+    name: Edson Ribeiro
+  description: |-
+    **Welcome to the E-Commerce API.**
+    This API provides robust resources for catalog, order, and user management.
+    ### Key Features:
+    * **Catalog**: Full management of categories, products, and SKUs.
+    * **Checkout**: Persistent shopping cart and order processing.
+    * **Inventory**: Real-time stock control.
+    ### Response Patterns:
+    The API uses standard HTTP status codes to indicate the success or failure of a request.
+    * `200 OK`: Request succeeded.
+    * `400 Bad Request`: Invalid input data.
+    * `404 Not Found`: Resource not found.
+    * `500 Internal Server Error`: Unexpected server error.
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: E-Commerce API
+  version: "1.0"
+paths:
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of categories with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by Parent ID
+        in: query
+        name: parent_id
+        type: integer
+      - description: Filter by Status
+        in: query
+        name: is_active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: List all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new category with the provided data
+      parameters:
+      - description: Category Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_catalog_delivery_http.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Delete a category
+      tags:
+      - categories
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific category details by its ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Get category by ID
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Update specific fields of a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_catalog_delivery_http.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Update a category
+      tags:
+      - categories
+  /categories/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific category details by its Slug
+      parameters:
+      - description: Category Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Get category by Slug
+      tags:
+      - categories
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of products with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by Category ID
+        in: query
+        name: category_id
+        type: integer
+      - description: Filter by Status
+        in: query
+        name: is_active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: List all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with the provided data
+      parameters:
+      - description: Product Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_catalog_delivery_http.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Delete a product
+      tags:
+      - products
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific product details by its ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Get product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update specific fields of a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_catalog_delivery_http.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Update a product
+      tags:
+      - products
+  /products/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve specific product details by its Slug
+      parameters:
+      - description: Product Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_catalog_domain.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/e-commerce-go_internal_shared_response.ErrorResponse'
+      summary: Get product by Slug
+      tags:
+      - products
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

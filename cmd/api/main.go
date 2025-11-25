@@ -10,20 +10,23 @@ import (
 	"syscall"
 	"time"
 
-	// Internal imports
 	categoryHTTP "e-commerce-go/internal/catalog/delivery/http"
 	"e-commerce-go/internal/catalog/repository"
 	"e-commerce-go/internal/catalog/service"
 	"e-commerce-go/internal/shared/config"
 	"e-commerce-go/internal/shared/database"
 	"e-commerce-go/internal/shared/middleware"
+	"e-commerce-go/internal/shared/transport"
 	"e-commerce-go/pkg/logger"
 
-	// External libraries
+	_ "e-commerce-go/docs"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -124,6 +127,14 @@ func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, error) {
 	// Infrastructure (Health & Diagnostics)
 	registerHealthEndpoints(r, db, cfg.Version)
 	registerDiagnostics(r, cfg.Environment)
+
+	// 1. Swagger UI (Devs - Try it out)
+	// Accessible: http://localhost:8081/swagger/index.html
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 2. Redoc UI (Consumers - Beautiful Docs)
+	// Accessible: http://localhost:8081/docs
+	r.GET("/docs", transport.RedocHandler)
 
 	// Module: Catalog
 	// Since Product depends on Category, instantiate Category first

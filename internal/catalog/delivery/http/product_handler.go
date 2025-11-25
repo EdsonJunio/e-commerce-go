@@ -5,37 +5,37 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
 	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/internal/shared/response"
 	"e-commerce-go/internal/shared/transport"
 	"e-commerce-go/pkg/logger"
-
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type ProductHandler struct {
 	service domain.ProductService
 }
 
-type createProductRequest struct {
-	CategoryID     *int   `json:"category_id" binding:"required,min=1"`
-	Name           string `json:"name" binding:"required,min=3,max=255"`
-	Slug           string `json:"slug" binding:"required"`
-	IsActive       bool   `json:"is_active" binding:"required"`
-	SeoTitle       string `json:"seoTitle" binding:"required,min=3,max=255"`
-	SeoDescription string `json:"seoDescription" binding:"required,min=3,max=255"`
-	Description    string `json:"description" binding:"required,min=3,max=255"`
+type CreateProductRequest struct {
+	CategoryID     *int   `json:"category_id" binding:"required,min=1" example:"1"`
+	Name           string `json:"name" binding:"required,min=3,max=255" example:"iPhone 15 Pro"`
+	Slug           string `json:"slug" binding:"required" example:"iphone-15-pro"`
+	IsActive       bool   `json:"is_active" binding:"required" example:"true"`
+	SeoTitle       string `json:"seoTitle" binding:"required,min=3,max=255" example:"iPhone 15 Pro - Apple"`
+	SeoDescription string `json:"seoDescription" binding:"required,min=3,max=255" example:"The new iPhone 15 Pro"`
+	Description    string `json:"description" binding:"required,min=3,max=255" example:"Titanium design, A17 Pro chip"`
 }
 
-type updateProductRequest struct {
-	CategoryID     *int    `json:"category_id,omitempty"`
-	Name           *string `json:"name,omitempty"`
-	Slug           *string `json:"slug,omitempty"`
-	IsActive       *bool   `json:"is_active,omitempty"`
-	SeoTitle       *string `json:"seoTitle,omitempty"`
-	SeoDescription *string `json:"seoDescription,omitempty"`
-	Description    *string `json:"description,omitempty"`
+type UpdateProductRequest struct {
+	CategoryID     *int    `json:"category_id,omitempty" example:"2"`
+	Name           *string `json:"name,omitempty" example:"iPhone 15 Pro Max"`
+	Slug           *string `json:"slug,omitempty" example:"iphone-15-pro-max"`
+	IsActive       *bool   `json:"is_active,omitempty" example:"false"`
+	SeoTitle       *string `json:"seoTitle,omitempty" example:"New SEO Title"`
+	SeoDescription *string `json:"seoDescription,omitempty" example:"New SEO Desc"`
+	Description    *string `json:"description,omitempty" example:"Updated description"`
 }
 
 func NewProductHandler(service domain.ProductService) *ProductHandler {
@@ -57,6 +57,19 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 	}
 }
 
+// ListProducts godoc
+// @Summary      List all products
+// @Description  Get a paginated list of products with optional filters
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        page         query     int     false  "Page number" default(1)
+// @Param        limit        query     int     false  "Page size" default(10)
+// @Param        category_id  query     int     false  "Filter by Category ID"
+// @Param        is_active    query     bool    false  "Filter by Status"
+// @Success      200          {object}  response.PaginatedResponse
+// @Failure      500          {object}  response.ErrorResponse
+// @Router       /products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -93,7 +106,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
@@ -102,9 +115,22 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		zap.Int("limit", limit),
 		zap.Int64("total", total),
 		zap.String("request_id", reqID))
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(products, total, page, limit, c.Request.URL.Path))
+
+	response.SuccessPaginated(c, http.StatusOK, products, total, page, limit)
 }
 
+// GetProduct godoc
+// @Summary      Get product by ID
+// @Description  Retrieve specific product details by its ID
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Product ID"
+// @Success      200  {object}  domain.Product
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /products/{id} [get]
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -114,7 +140,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 		logger.L().Warn("invalid ID in GetProduct",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID))
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
+		response.Error(c, http.StatusBadRequest, "invalid_id", "invalid product ID")
 		return
 	}
 
@@ -134,7 +160,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
@@ -142,9 +168,21 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 		zap.Int("id", id),
 		zap.String("request_id", reqID),
 	)
-	c.JSON(http.StatusOK, product)
+	response.Success(c, http.StatusOK, product)
 }
 
+// GetProductBySlug godoc
+// @Summary      Get product by Slug
+// @Description  Retrieve specific product details by its Slug
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        slug path      string  true  "Product Slug"
+// @Success      200  {object}  domain.Product
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /products/slug/{slug} [get]
 func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	slug := c.Param("slug")
@@ -154,8 +192,7 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 			"empty slug in GetProductBySlug",
 			zap.String("request_id", reqID),
 		)
-
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_slug", "product slug is required"))
+		response.Error(c, http.StatusBadRequest, "invalid_slug", "product slug is required")
 		return
 	}
 
@@ -174,27 +211,39 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
 	logger.L().Info("product retrieved by slug",
 		zap.String("slug", slug),
 		zap.String("request_id", reqID))
-	c.JSON(http.StatusOK, product)
+
+	response.Success(c, http.StatusOK, product)
 }
 
+// CreateProduct godoc
+// @Summary      Create a new product
+// @Description  Create a new product with the provided data
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        request body      CreateProductRequest  true  "Product Data"
+// @Success      201     {object}  domain.Product
+// @Failure      400     {object}  response.ErrorResponse
+// @Failure      500     {object}  response.ErrorResponse
+// @Router       /products [post]
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 
-	var req createProductRequest
+	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.L().Warn(
 			"invalid request in CreateProduct",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
+		response.Error(c, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
 
@@ -224,7 +273,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
@@ -234,9 +283,22 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		zap.String("slug", product.Slug),
 		zap.String("request_id", reqID),
 	)
-	c.JSON(http.StatusCreated, product)
+	response.Success(c, http.StatusCreated, product)
 }
 
+// UpdateProduct godoc
+// @Summary      Update a product
+// @Description  Update specific fields of a product by ID
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        id       path      int                   true  "Product ID"
+// @Param        request  body      UpdateProductRequest  true  "Update Data"
+// @Success      200      {object}  domain.Product
+// @Failure      400      {object}  response.ErrorResponse
+// @Failure      404      {object}  response.ErrorResponse
+// @Failure      500      {object}  response.ErrorResponse
+// @Router       /products/{id} [put]
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -248,18 +310,18 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
+		response.Error(c, http.StatusBadRequest, "invalid_id", "invalid product ID")
 		return
 	}
 
-	var req updateProductRequest
+	var req UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.L().Warn(
 			"invalid request in UpdateProduct",
 			zap.Error(err),
 			zap.String("request_id", reqID),
 		)
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_request", err.Error()))
+		response.Error(c, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
 
@@ -302,7 +364,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
@@ -313,9 +375,20 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		zap.Int("id", id),
 		zap.String("request_id", reqID),
 	)
-	c.JSON(http.StatusOK, updatedProduct)
+	response.Success(c, http.StatusOK, updatedProduct)
 }
 
+// DeleteProduct godoc
+// @Summary      Delete a product
+// @Description  Soft delete a product by ID
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Product ID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /products/{id} [delete]
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
 	idParam := c.Param("id")
@@ -325,7 +398,7 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		logger.L().Warn("invalid ID in DeleteProduct",
 			zap.String("id_param", idParam),
 			zap.String("request_id", reqID))
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("invalid_id", "invalid product ID"))
+		response.Error(c, http.StatusBadRequest, "invalid_id", "invalid product ID")
 		return
 	}
 
@@ -345,13 +418,15 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 			msg = "internal server error"
 		}
 
-		c.JSON(mapping.HTTPCode, response.NewErrorResponse(mapping.Code, msg))
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
 		return
 	}
 
 	logger.L().Info(
 		"product deleted successfully",
 		zap.Int("id", id),
-		zap.String("request_id", reqID))
+		zap.String("request_id", reqID),
+	)
+
 	c.Status(http.StatusNoContent)
 }
