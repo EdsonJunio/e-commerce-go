@@ -13,6 +13,7 @@ import (
 	categoryHTTP "e-commerce-go/internal/catalog/delivery/http"
 	"e-commerce-go/internal/catalog/repository"
 	"e-commerce-go/internal/catalog/service"
+	"e-commerce-go/internal/shared/cache"
 	"e-commerce-go/internal/shared/config"
 	"e-commerce-go/internal/shared/database"
 	"e-commerce-go/internal/shared/middleware"
@@ -53,7 +54,7 @@ func main() {
 	}
 
 	// Boot Application
-	srv, db, err := buildServer(cfg)
+	srv, db, rdb, err := buildServer(cfg)
 	if err != nil {
 		logger.L().Fatal("failed to build server", zap.Error(err))
 	}
@@ -93,16 +94,29 @@ func main() {
 		// Close Database connection (Cleanup resources)
 		closeDBConnection(db)
 
+		//CLOSE REDIS TOO (Graceful Shutdown)
+		if err := rdb.Close(); err != nil {
+			logger.L().Error("failed to close redis connection", zap.Error(err))
+		} else {
+			logger.L().Info("redis connection closed")
+		}
+
 		logger.L().Info("server exited properly")
 	}
 }
 
 // buildServer configures dependencies, routes, and returns the ready-to-run server.
-func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, error) {
+func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, *cache.RedisClient, error) {
 	// Database Connection
 	db, err := database.ConnectDB()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
+	}
+
+	rdb, err := cache.NewRedisClient(cfg)
+	if err != nil {
+		// If Redis fails, the application does not go up.
+		return nil, nil, nil, err
 	}
 
 	// Router Initialization
@@ -138,7 +152,7 @@ func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, error) {
 
 	// Module: Catalog
 	// Since Product depends on Category, instantiate Category first
-	categoryRepo := repository.NewCategoryRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db, rdb)
 	productRepo := repository.NewProductRepository(db)
 
 	categorySvc := service.NewCategoryService(categoryRepo)
@@ -158,7 +172,7 @@ func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, error) {
 		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
-	return srv, db, nil
+	return srv, db, rdb, nil
 }
 
 // closeDBConnection retrieves the generic SQL interface and closes it.

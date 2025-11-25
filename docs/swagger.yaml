@@ -207,7 +207,7 @@ definitions:
         example: iphone-15-pro-max
         type: string
     type: object
-host: localhost:8080
+host: localhost:8081
 info:
   contact:
     email: support@test.com

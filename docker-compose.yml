@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -35,12 +35,37 @@ services:
       - DB_MAX_IDLE_CONNS=5
       - DB_CONN_MAX_LIFETIME=30m
       - DB_LOG_LEVEL=info
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       db:
         condition: service_healthy
+      redis:
+          condition: service_healthy
     volumes:
       - .:/app
     command: sh -c "go run cmd/api/main.go"
 
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ecommerce_redis_gui
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8082:8081"
+    depends_on:
+      - redis
 volumes:
   postgres_data:
