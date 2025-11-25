@@ -94,6 +94,13 @@ migrate-force:
 	@echo "Forcing migration version..."
 	@migrate -path $(MIGRATE_PATH) -database "$(DB_URL)" force $(VERSION)
 
+# --- SEED---
+.PHONY: seed
+seed:
+	@echo "Seeding database..."
+	@go run cmd/seed/main.go
+
+
 # --- GO / APP ---
 .PHONY: run
 run:
