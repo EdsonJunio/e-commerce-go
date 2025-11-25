@@ -144,6 +144,13 @@ clean:
 .PHONY: docs
 docs:
 	@echo "Generating Swagger documentation..."
-	@# --parseDependency: Lê arquivos do GORM e outras libs externas
-	@# --parseInternal: Garante que leia seus pacotes internal
+	@# --parseDependency: Reads files from GORM and other external libs
+	@# --parseInternal: Ensures that it reads your internal packages
 	@swag init -g cmd/api/docs.go --output docs --parseDependency --parseInternal
+
+.PHONY: air
+air:
+	@echo "Starting Air (Live Reload)..."
+	@# Check if the air is installed before running
+	@type "air" > /dev/null 2>&1 || (echo "Air not found. Installing..." && go install github.com/air-verse/air@latest)
+	@air -c .air.toml

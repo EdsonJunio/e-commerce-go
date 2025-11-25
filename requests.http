@@ -94,7 +94,7 @@ Content-Type: application/json
 
 ### Update a category (partial update)
 # Only include fields that need to be updated
-PUT {{baseUrl}}/categories/0
+PUT {{baseUrl}}/categories/10
 Content-Type: application/json
 
 {
