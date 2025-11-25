@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/wire v0.7.0
-	github.com/jackc/pgx/v5 v5.6.0
+	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
 	go.uber.org/zap v1.27.0
 	gorm.io/driver/postgres v1.6.0
@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
