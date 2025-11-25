@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS stock_movements;
+DROP TABLE IF EXISTS stock;
+DROP TABLE IF EXISTS price_history;
+DROP TABLE IF EXISTS product_skus;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;

@@ -1,69 +1,51 @@
-# Binários
-bin/
-dist/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# --- Controle de Versão (CRÍTICO: Deixa o build muito mais rápido) ---
+.git
+.gitignore
+.dockerignore
 
-# Testes e cobertura
-*.test
-*.out
-coverage.txt
-
-# Dependências
-vendor/
-
-# Variáveis de ambiente
-.env
-
-# Logs
-*.log
-
-# IDE e editores
+# --- IDEs e Configurações Locais ---
 .idea/
 .vscode/
+.DS_Store
 *.swp
 *.swo
 *~
-
-# Arquivos do sistema operacional
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Air live reload
-.air.toml
-.air.conf
-
-# Arquivos de debug
-debug/
-
-# Node.js (se for usar frontend)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Arquivos temporários
-*.tmp
-*.bak
-*.swp
-*~
-
-# Arquivos de build do frontend (se houver)
-/build/
-/dist/
-
-# Arquivos de configuração local
 *.local
-
-# Ignorar histórico do GoLand
 *.history*
 */terminal/history/*
 
+# --- Variáveis de Ambiente e Segredos (SEGURANÇA MÁXIMA) ---
+.env
+.env.*
+*.secret
+
+# --- Arquivos de Build Local (Não copiar para dentro do Docker) ---
+bin/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+main  # O binário compilado localmente
+
+# --- Dependências e Logs ---
+vendor/
+node_modules/
+*.log
+coverage.txt
+*.out
+*.test
+
+# --- Ferramentas de Desenvolvimento e Docs ---
+Makefile
+README.md
+docker-compose.yml
+Dockerfile
+scripts/
+.air.toml
+.air.conf
+
+# --- Pastas de Testes/Debug ---
+debug/
+__debug_bin
