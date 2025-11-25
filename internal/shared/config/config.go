@@ -21,6 +21,7 @@ type Config struct {
 	Environment string
 	Server      ServerConfig
 	Database    DatabaseConfig
+	Redis       RedisConfig
 	CORS        CORSConfig
 }
 
@@ -54,6 +55,14 @@ type CORSConfig struct {
 	AllowHeaders     []string
 	AllowCredentials bool
 	MaxAge           time.Duration
+}
+
+// RedisConfig settings
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
 }
 
 // getEnvString gets an environment variable as a string with a default value
@@ -150,6 +159,12 @@ func Load() *Config {
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", 30*time.Minute),
 			LogLevel:        getEnvString("DB_LOG_LEVEL", "warn"),
+		},
+		Redis: RedisConfig{
+			Host:     getEnvString("REDIS_HOST", "localhost"),
+			Port:     getEnvString("REDIS_PORT", "6379"),
+			Password: getEnvString("REDIS_PASSWORD", ""),
+			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		CORS: CORSConfig{
 			AllowOrigins:     getEnvStringSlice("CORS_ALLOW_ORIGINS", []string{"*"}),
