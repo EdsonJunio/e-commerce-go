@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"e-commerce-go/internal/shared/security"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -84,19 +85,39 @@ func seedUsers(db *sql.DB) []int {
 	fmt.Printf("Seeding %d users...\n", TotalUsers)
 	var ids []int
 
-	// Fixed Admin
+	// 1. Create fixed Admin user
 	var adminID int
+
+	// CRIPTOGRAFA A SENHA ANTES DE SALVAR
+	adminPass, _ := security.HashPassword("hash123") // A senha para logar será "hash123"
+
 	query := `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4) RETURNING id`
-	db.QueryRow(query, "admin@gmail.com", "hash123", "Admin User", "+551199999999").Scan(&adminID)
+
+	// Note que passamos 'adminPass' (o hash) e não a string pura
+	err := db.QueryRow(query, "admin@gmail.com", adminPass, "Admin User", "+551199999999").Scan(&adminID)
+	if err != nil {
+		log.Fatalf("Failed to create admin: %v", err)
+	}
 	ids = append(ids, adminID)
 
-	// Random Users
+	// 2. Create fake users
+	query = `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4) RETURNING id`
 	for i := 0; i < TotalUsers; i++ {
 		var id int
-		err := db.QueryRow(query, gofakeit.Email(), gofakeit.Password(true, true, true, false, false, 12), gofakeit.Name(), gofakeit.Phone()).Scan(&id)
-		if err == nil {
-			ids = append(ids, id)
+		email := gofakeit.Email()
+
+		// Criptografa a senha fake também
+		fakePass, _ := security.HashPassword("123456") // Todos os users fakes terão senha "123456"
+
+		name := gofakeit.Name()
+		phone := gofakeit.Phone()
+
+		err := db.QueryRow(query, email, fakePass, name, phone).Scan(&id)
+		if err != nil {
+			log.Printf("Error creating user: %v", err)
+			continue
 		}
+		ids = append(ids, id)
 	}
 	return ids
 }

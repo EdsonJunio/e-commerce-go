@@ -10,7 +10,7 @@ MIGRATE_PATH=internal/database/migrations
 all: help
 
 help:
-	@echo "FinHub Makefile commands"
+	@echo "ECOMMERCE Makefile commands"
 	@echo "----------------------------------------------------------------"
 	@echo "  DEV ENVIRONMENT (GoLand / VSCode)"
 	@echo "  setup              Configures Git Hooks and permissions"

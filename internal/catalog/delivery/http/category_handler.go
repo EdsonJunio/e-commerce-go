@@ -1,6 +1,7 @@
 package http
 
 import (
+	"e-commerce-go/internal/shared/middleware"
 	"net/http"
 	"strconv"
 	"strings"
@@ -38,7 +39,7 @@ func NewCategoryHandler(service domain.CategoryService) *CategoryHandler {
 	return &CategoryHandler{service: service}
 }
 
-func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
+func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine, auth *middleware.AuthMiddleware) {
 	v1 := router.Group("/api/v1")
 	{
 		category := v1.Group("/categories")
@@ -46,9 +47,14 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine) {
 			category.GET("", h.ListCategories)
 			category.GET("/:id", h.GetCategory)
 			category.GET("/slug/:slug", h.GetCategoryBySlug)
-			category.POST("", h.CreateCategory)
-			category.PUT("/:id", h.UpdateCategory)
-			category.DELETE("/:id", h.DeleteCategory)
+
+			protected := category.Group("")
+			protected.Use(auth.Handle())
+			{
+				protected.POST("", h.CreateCategory)
+				protected.PUT("/:id", h.UpdateCategory)
+				protected.DELETE("/:id", h.DeleteCategory)
+			}
 		}
 	}
 }
@@ -228,7 +234,8 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 // @Param        request body      CreateCategoryRequest  true  "Category Data"
 // @Success      201     {object}  domain.Category
 // @Failure      400     {object}  response.ErrorResponse
-// @Failure      500     {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /categories [post]
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
@@ -283,6 +290,8 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 // @Failure      400      {object}  response.ErrorResponse
 // @Failure      404      {object}  response.ErrorResponse
 // @Failure      500      {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /categories/{id} [put]
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
@@ -372,6 +381,8 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 // @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /categories/{id} [delete]
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
