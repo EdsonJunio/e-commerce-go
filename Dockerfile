@@ -1,41 +1,39 @@
-# --- Estágio 1: Builder (Compilação) ---
-FROM golang:1.23-alpine AS builder
+# --- Build Stage ---
+FROM golang:1.25.1-alpine AS builder
 
-# Instala certificados SSL (necessário para HTTPS/Bancos na nuvem) e git
+# Install dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /app
 
-# Otimização de cache: Copia apenas arquivos de dependência primeiro
+# Cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copia o código fonte
+# Copy source code
 COPY . .
 
-# Compila o binário
-# -ldflags="-w -s": Remove informações de debug para diminuir o tamanho do binário
-# -o api: Nome do executável
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o api ./cmd/api/main.go
+# Build the binary named 'main'
+# CGO_ENABLED=0 -> Static binary (no external C dependencies)
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/api/main.go
 
-# --- Estágio 2: Final (Produção) ---
-# Usamos 'scratch' (imagem vazia) para segurança máxima e tamanho mínimo
+# --- Final Stage ---
 FROM scratch
 
 WORKDIR /app
 
-# Copia os certificados SSL e Zona de Tempo do estágio anterior
+# Copy necessary system files from builder
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Copia APENAS o binário compilado
-COPY --from=builder /app/api .
+# Copy the binary
+COPY --from=builder /app/main .
 
-# Expõe a porta (apenas documentação)
-EXPOSE 8080
-
-# Define o usuário como não-root (segurança extra, id 65532 é comum em distroless)
+# Set non-root user
 USER 65532:65532
 
-# Comando para rodar
-ENTRYPOINT ["./api"]
+# Expose port
+EXPOSE 8081
+
+# Run!
+ENTRYPOINT ["./main"]
