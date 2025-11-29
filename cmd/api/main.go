@@ -28,6 +28,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -121,6 +122,11 @@ func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, *cache.RedisClient
 
 	// Router Initialization
 	r := gin.New()
+
+	// --- OBSERVABILITY (PROMETHEUS) ---
+	// Isso cria automaticamente a rota /metrics
+	p := ginprometheus.NewPrometheus("gin")
+	p.Use(r)
 
 	// Global Middlewares
 	r.Use(requestid.New())

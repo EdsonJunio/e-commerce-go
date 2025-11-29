@@ -87,7 +87,7 @@ func seedUsers(db *sql.DB) []int {
 	// Fixed Admin
 	var adminID int
 	query := `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4) RETURNING id`
-	db.QueryRow(query, "admin@finhub.com", "hash123", "Admin User", "+551199999999").Scan(&adminID)
+	db.QueryRow(query, "admin@gmail.com", "hash123", "Admin User", "+551199999999").Scan(&adminID)
 	ids = append(ids, adminID)
 
 	// Random Users

@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ecommerce" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,28 +23,22 @@ services:
     build: .
     container_name: ecommerce_api
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
+      - SERVER_PORT=8081
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=1234
       - DB_NAME=ecommerce
-      - DB_SSLMODE=disable
-      - DB_MAX_OPEN_CONNS=10
-      - DB_MAX_IDLE_CONNS=5
-      - DB_CONN_MAX_LIFETIME=30m
-      - DB_LOG_LEVEL=info
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
       db:
         condition: service_healthy
       redis:
-          condition: service_healthy
-    volumes:
-      - .:/app
-    command: sh -c "go run cmd/api/main.go"
+        condition: service_healthy
+    # Removemos 'volumes' e 'command' para usar o binário final da imagem
 
   redis:
     image: redis:7-alpine
@@ -67,5 +61,28 @@ services:
       - "8082:8081"
     depends_on:
       - redis
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ecommerce_prometheus
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ecommerce_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
