@@ -1,6 +1,7 @@
 package http
 
 import (
+	"e-commerce-go/internal/shared/middleware"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,7 +43,7 @@ func NewProductHandler(service domain.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
+func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine, auth *middleware.AuthMiddleware) {
 	v1 := router.Group("/api/v1")
 	{
 		products := v1.Group("/products")
@@ -50,9 +51,14 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine) {
 			products.GET("", h.ListProducts)
 			products.GET("/:id", h.GetProduct)
 			products.GET("/slug/:slug", h.GetProductBySlug)
-			products.POST("", h.CreateProduct)
-			products.PUT("/:id", h.UpdateProduct)
-			products.DELETE("/:id", h.DeleteProduct)
+
+			protected := products.Group("")
+			protected.Use(auth.Handle())
+			{
+				protected.POST("", h.CreateProduct)
+				protected.PUT("/:id", h.UpdateProduct)
+				protected.DELETE("/:id", h.DeleteProduct)
+			}
 		}
 	}
 }
@@ -232,6 +238,8 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 // @Success      201     {object}  domain.Product
 // @Failure      400     {object}  response.ErrorResponse
 // @Failure      500     {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /products [post]
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
@@ -298,6 +306,8 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 // @Failure      400      {object}  response.ErrorResponse
 // @Failure      404      {object}  response.ErrorResponse
 // @Failure      500      {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /products/{id} [put]
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
@@ -388,6 +398,8 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 // @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
+// @Failure      401     {object}  response.ErrorResponse
+// @Security     BearerAuth
 // @Router       /products/{id} [delete]
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	reqID := c.Writer.Header().Get("X-Request-ID")
