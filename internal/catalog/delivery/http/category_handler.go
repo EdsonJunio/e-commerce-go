@@ -63,8 +63,8 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine, auth *middl
 // @Summary      List all categories
 // @Description  Get a paginated list of categories with optional filters
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        page       query     int     false  "Page number" default(1)
 // @Param        limit      query     int     false  "Page size" default(10)
 // @Param        parent_id  query     int     false  "Filter by Parent ID"
@@ -125,8 +125,8 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 // @Summary      Get category by ID
 // @Description  Retrieve specific category details by its ID
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id   path      int  true  "Category ID"
 // @Success      200  {object}  domain.Category
 // @Failure      400  {object}  response.ErrorResponse
@@ -181,8 +181,8 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 // @Summary      Get category by Slug
 // @Description  Retrieve specific category details by its Slug
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        slug path      string  true  "Category Slug"
 // @Success      200  {object}  domain.Category
 // @Failure      400  {object}  response.ErrorResponse
@@ -229,8 +229,8 @@ func (h *CategoryHandler) GetCategoryBySlug(c *gin.Context) {
 // @Summary      Create a new category
 // @Description  Create a new category with the provided data
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        request body      CreateCategoryRequest  true  "Category Data"
 // @Success      201     {object}  domain.Category
 // @Failure      400     {object}  response.ErrorResponse
@@ -282,8 +282,8 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 // @Summary      Update a category
 // @Description  Update specific fields of a category by ID
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id       path      int                    true  "Category ID"
 // @Param        request  body      UpdateCategoryRequest  true  "Update Data"
 // @Success      200      {object}  domain.Category
@@ -375,8 +375,8 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 // @Summary      Delete a category
 // @Description  Soft delete a category by ID
 // @Tags         categories
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id   path      int  true  "Category ID"
 // @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
