@@ -67,8 +67,8 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine, auth *middlew
 // @Summary      List all products
 // @Description  Get a paginated list of products with optional filters
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        page         query     int     false  "Page number" default(1)
 // @Param        limit        query     int     false  "Page size" default(10)
 // @Param        category_id  query     int     false  "Filter by Category ID"
@@ -129,8 +129,8 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 // @Summary      Get product by ID
 // @Description  Retrieve specific product details by its ID
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id   path      int  true  "Product ID"
 // @Success      200  {object}  domain.Product
 // @Failure      400  {object}  response.ErrorResponse
@@ -181,8 +181,8 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 // @Summary      Get product by Slug
 // @Description  Retrieve specific product details by its Slug
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        slug path      string  true  "Product Slug"
 // @Success      200  {object}  domain.Product
 // @Failure      400  {object}  response.ErrorResponse
@@ -232,8 +232,8 @@ func (h *ProductHandler) GetProductBySlug(c *gin.Context) {
 // @Summary      Create a new product
 // @Description  Create a new product with the provided data
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        request body      CreateProductRequest  true  "Product Data"
 // @Success      201     {object}  domain.Product
 // @Failure      400     {object}  response.ErrorResponse
@@ -298,8 +298,8 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 // @Summary      Update a product
 // @Description  Update specific fields of a product by ID
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id       path      int                   true  "Product ID"
 // @Param        request  body      UpdateProductRequest  true  "Update Data"
 // @Success      200      {object}  domain.Product
@@ -392,8 +392,8 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 // @Summary      Delete a product
 // @Description  Soft delete a product by ID
 // @Tags         products
-// @Accept       json
-// @Produce      json
+// @Accept       JSON
+// @Produce      JSON
 // @Param        id   path      int  true  "Product ID"
 // @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
