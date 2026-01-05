@@ -1,12 +1,16 @@
 #########################################################
-# Configuration
+# GLOBAL CONFIGURATION
 #########################################################
-@baseUrl = http://localhost:8081/api/v1
-@hostUrl = http://localhost:8081
 
-# 1. Login (Execute this first to get the Token)
-# If using VS Code REST Client, the token is saved automatically.
-# If not, copy the token from the response and paste it into the @authToken variable below.
+@hostUrl = http://localhost:8081
+@baseUrl = {{hostUrl}}/api/v1
+
+#########################################################
+# AUTHENTICATION
+#########################################################
+
+### Login (execute primeiro)
+# O token será capturado automaticamente pelo REST Client
 # @name login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
@@ -16,27 +20,27 @@ Content-Type: application/json
   "password": "hash123"
 }
 
-### Token Variable (Captured automatically or paste here)
+### Auth Token (auto ou manual)
 @authToken = {{login.response.body.data.token}}
 
 #########################################################
-# Infra / Health
+# INFRA / HEALTH CHECKS
 #########################################################
 
-### Health check (Liveness)
+### Liveness
 GET {{hostUrl}}/live
 Content-Type: application/json
 
-### Ready check (Readiness - DB connection)
+### Readiness (DB, deps, etc)
 GET {{hostUrl}}/ready
 Content-Type: application/json
 
 #########################################################
-# Product Endpoints
+# PRODUCTS
 #########################################################
 
-### List all products (Public)
-# Optional query params: page, limit, category_id, is_active
+### List products (Public)
+# Query params: page, limit, category_id, is_active
 GET {{baseUrl}}/products?page=1&limit=10
 Content-Type: application/json
 
@@ -44,11 +48,11 @@ Content-Type: application/json
 GET {{baseUrl}}/products/1
 Content-Type: application/json
 
-### Get product by slug
+### Get product by Slug
 GET {{baseUrl}}/products/slug/iphone-15-pro
 Content-Type: application/json
 
-### Create a new product (Protected)
+### Create product (Protected)
 POST {{baseUrl}}/products
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
@@ -58,12 +62,12 @@ Authorization: Bearer {{authToken}}
   "name": "Sapato Nike Air",
   "slug": "sapato-nike-air-2025",
   "is_active": true,
-  "seoTitle": "Sapato Nike Air Melhor Preco",
+  "seoTitle": "Sapato Nike Air Melhor Preço",
   "seoDescription": "O melhor sapato de corrida",
   "description": "Um produto excelente para atletas"
 }
 
-### Update a product (Protected)
+### Update product (Protected)
 PUT {{baseUrl}}/products/1
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
@@ -73,16 +77,16 @@ Authorization: Bearer {{authToken}}
   "price_cents": 50000
 }
 
-### Delete a product (Protected)
+### Delete product (Protected)
 DELETE {{baseUrl}}/products/1
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 #########################################################
-# Category Endpoints
+# CATEGORIES
 #########################################################
 
-### List all categories (Public)
+### List categories (Public)
 GET {{baseUrl}}/categories?page=1&limit=10
 Content-Type: application/json
 
@@ -90,7 +94,7 @@ Content-Type: application/json
 GET {{baseUrl}}/categories/1
 Content-Type: application/json
 
-### Create a category (Protected)
+### Create category (Protected)
 POST {{baseUrl}}/categories
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
@@ -103,7 +107,7 @@ Authorization: Bearer {{authToken}}
   "parent_id": 1
 }
 
-### Update a category (Protected)
+### Update category (Protected)
 PUT {{baseUrl}}/categories/2
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
@@ -113,7 +117,7 @@ Authorization: Bearer {{authToken}}
   "description": "High performance laptops"
 }
 
-### Delete a category (Protected)
+### Delete category (Protected)
 DELETE {{baseUrl}}/categories/99
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
