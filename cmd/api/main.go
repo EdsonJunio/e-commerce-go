@@ -200,15 +200,20 @@ func setupIdentityModule(r *gin.Engine, db *gorm.DB, jwtSvc sharedService.JWTSer
 func setupCatalogModule(r *gin.Engine, db *gorm.DB, rdb *cache.RedisClient, auth *middleware.AuthMiddleware) {
 	catRepo := repository.NewCategoryRepository(db, rdb)
 	prodRepo := repository.NewProductRepository(db)
+	prodSKURepo := repository.NewSkuRepository(db)
 
 	catSvc := service.NewCategoryService(catRepo)
 	prodSvc := service.NewProductService(prodRepo, catRepo)
+	prodSKUSvc := service.NewProductSKUService(prodSKURepo)
 
 	catHandler := categoryHTTP.NewCategoryHandler(catSvc)
 	prodHandler := categoryHTTP.NewProductHandler(prodSvc)
+	prodSKUHandler := categoryHTTP.NewSkuHandler(prodSKUSvc)
 
 	catHandler.RegisterCategoryRoutes(r, auth)
 	prodHandler.RegisterProductRoutes(r, auth)
+	prodSKUHandler.RegisterSkuRoutes(r, auth)
+
 }
 
 // registerHealthEndpoints remains the same...
