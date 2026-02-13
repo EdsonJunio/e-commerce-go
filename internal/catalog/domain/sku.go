@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ProductSKU struct {
+type Sku struct {
 	ID            int                    `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	ProductID     int                    `gorm:"column:product_id;not null;index" json:"product_id"`
 	SkuCode       string                 `gorm:"column:sku_code;unique;not null" json:"sku_code"`
@@ -19,4 +19,10 @@ type ProductSKU struct {
 	UpdatedAt     time.Time              `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 	DeletedAt     gorm.DeletedAt         `gorm:"column:deleted_at;index" json:"deleted_at,omitempty"`
 	DeletedReason string                 `gorm:"column:deleted_reason" json:"deleted_reason,omitempty"`
+}
+
+type SkuRepository interface {
+}
+
+type SkuService interface {
 }
