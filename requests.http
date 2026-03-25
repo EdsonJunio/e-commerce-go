@@ -121,3 +121,40 @@ Authorization: Bearer {{authToken}}
 DELETE {{baseUrl}}/categories/99
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
+
+#########################################################
+# SKUS
+#########################################################
+
+### List skus (Public)
+GET {{baseUrl}}/skus
+Content-Type: application/json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

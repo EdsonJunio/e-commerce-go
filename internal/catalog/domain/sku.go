@@ -1,12 +1,13 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-type Sku struct {
+type Product_skus struct {
 	ID            int                    `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	ProductID     int                    `gorm:"column:product_id;not null;index" json:"product_id"`
 	SkuCode       string                 `gorm:"column:sku_code;unique;not null" json:"sku_code"`
@@ -21,8 +22,10 @@ type Sku struct {
 	DeletedReason string                 `gorm:"column:deleted_reason" json:"deleted_reason,omitempty"`
 }
 
-type SkuRepository interface {
+type ProductSkusRepository interface {
+	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]Product_skus, int64, error)
 }
 
-type SkuService interface {
+type ProductSkuService interface {
+	ListSkus(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Product_skus, int64, error)
 }
