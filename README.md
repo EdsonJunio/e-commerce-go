@@ -7,6 +7,8 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)
 
+> **Estado atual:** este repositório está em retomada e ainda representa um protótipo parcial. Consulte o [diagnóstico técnico](./docs/project/01-diagnostico-atual.md) e o [plano de execução](./docs/project/02-plano-de-execucao.md) antes de usar as descrições históricas abaixo como referência de funcionalidades prontas.
+
 Uma API robusta, rápida e escalável para e-commerce, construída em **Go**. Embora outras tecnologias tenham construído a web e mereçam respeito, este projeto consolida a linguagem do mascote azul como a principal ferramenta de estudo e experimentação do portfólio. A arquitetura foi desenhada para proporcionar aquela sensação viciante de compilar um binário enxuto, ver a aplicação subindo em milissegundos e aguentar tráfego pesado sem suar a camisa. 💙🦫
 
 O projeto adota princípios de **Clean Architecture** (Domain-Driven), garantindo separação clara de responsabilidades, fácil manutenção e alta performance.
@@ -45,7 +47,7 @@ O projeto segue uma estrutura modular dividida por domínios da regra de negóci
 .
 ├── cmd/                # Pontos de entrada da aplicação (main.go, seeders)
 ├── deploy/             # Arquivos de infra (Prometheus, Grafana)
-├── docs/               # Documentação gerada pelo Swagger
+├── docs/               # Swagger gerado e documentação técnica do projeto
 ├── internal/           # Código privado da aplicação (Regras de negócio)
 │   ├── catalog/        # Domínio de Catálogo (Produtos, Categorias, SKUs)
 │   ├── database/       # Migrations SQL
@@ -53,38 +55,51 @@ O projeto segue uma estrutura modular dividida por domínios da regra de negóci
 │   └── shared/         # Middlewares, configs, cache, responses base
 ├── pkg/                # Pacotes públicos e utilitários (ex: logger)
 └── scripts/            # Scripts utilitários (testes, hooks de git)
-⚙️ Como Executar o Projeto
-Pré-requisitos
-Go 1.25+ instalado
+```
 
-Docker e Docker Compose instalados
+## ⚙️ Como Executar o Projeto
 
-Make (Opcional, mas recomendado)
+### Pré-requisitos
 
-Passo a Passo
+- Go 1.25+ instalado
+- Docker e Docker Compose instalados
+- Make (opcional, mas recomendado)
+
+### Passo a passo
+
 Clone o repositório:
 
-Bash
-git clone [https://github.com/seu-usuario/e-commerce-go.git](https://github.com/seu-usuario/e-commerce-go.git)
+```bash
+git clone https://github.com/seu-usuario/e-commerce-go.git
 cd e-commerce-go
+```
+
 Configure as variáveis de ambiente:
+
 Crie um arquivo .env na raiz do projeto (use as variáveis necessárias conforme o seu pacote de config).
 
 Suba a infraestrutura (Postgres, Redis, Prometheus):
 
-Bash
+```bash
 docker-compose up -d db redis prometheus grafana
+```
+
 Rode as migrações:
 
-Bash
+```bash
 make migrate-up
+```
+
 Inicie a API:
 
-Bash
+```bash
 go run cmd/api/main.go
+```
+
 A aplicação estará rodando em http://localhost:8081 (ou a porta que estiver configurada no seu .env).
 
-📚 Documentação da API (Swagger)
+## 📚 Documentação da API (Swagger)
+
 A documentação interativa das rotas é gerada automaticamente pelo Swagger.
 Com a aplicação rodando, acesse:
 
@@ -92,10 +107,12 @@ Com a aplicação rodando, acesse:
 
 Para atualizar o Swagger após modificar os comentários nas rotas:
 
-Bash
-swag init -g cmd/api/main.go --parseDependency --parseInternal
-📊 Monitoramento e Observabilidade
+```bash
+make docs
+```
+
+## 📊 Monitoramento e Observabilidade
+
 Este projeto possui integração nativa com o Prometheus. As métricas da aplicação (tempo de resposta, taxa de erros,
 consumo de memória) são expostas na rota /metrics e podem ser visualizadas no dashboard do Grafana na porta 3000
 (configurado via Docker Compose).
-
