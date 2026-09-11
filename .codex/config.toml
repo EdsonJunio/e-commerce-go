@@ -1,0 +1,11 @@
+# GitHub's official remote MCP server.
+# Keep the token outside the repository and expose it as
+# GITHUB_PAT_TOKEN before starting Codex.
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/x/all"
+bearer_token_env_var = "GITHUB_PAT_TOKEN"
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+default_tools_approval_mode = "writes"
