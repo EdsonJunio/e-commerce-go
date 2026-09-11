@@ -34,19 +34,19 @@ The total statement coverage is currently 9.7%. Identity has meaningful unit cov
 
 ## 3. Current risks
 
-| Priority | Gap | Current impact |
-| --- | --- | --- |
-| Critical | Handler and repository filter keys do not match | Category, product, and SKU filters are silently ignored |
-| Critical | Partial updates lose boolean field presence | Updating an unrelated field can deactivate a category or product |
-| Critical | SKU model does not match the database schema | SKU listing can query nonexistent columns and fail at runtime |
-| High | Category cache invalidation is incomplete | Renamed or deleted categories can remain visible through stale slug keys |
-| High | Catalog business paths have almost no tests | Regressions can pass every current quality command |
-| High | No mandatory CI pipeline exists | Local hooks can be bypassed and merges are not independently verified |
-| High | Database invariants are incomplete | Invalid stock and ambiguous soft-delete behavior remain possible |
-| Medium | Redis is required at startup but absent from readiness | Orchestrators can receive an incomplete health signal |
-| Medium | Login limiting is process-local | Limits reset and diverge when the API has multiple replicas |
-| Medium | Generated OpenAPI and manual documentation are stale | Consumers receive contracts that do not match runtime behavior |
-| Medium | Repository and tooling contain dead or redundant artifacts | Maintenance and onboarding remain unnecessarily confusing |
+| Priority | Gap                                                        | Current impact                                                           |
+| -------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Critical | Handler and repository filter keys do not match            | Category, product, and SKU filters are silently ignored                  |
+| Critical | Partial updates lose boolean field presence                | Updating an unrelated field can deactivate a category or product         |
+| Critical | SKU model does not match the database schema               | SKU listing can query nonexistent columns and fail at runtime            |
+| High     | Category cache invalidation is incomplete                  | Renamed or deleted categories can remain visible through stale slug keys |
+| High     | Catalog business paths have almost no tests                | Regressions can pass every current quality command                       |
+| High     | No mandatory CI pipeline exists                            | Local hooks can be bypassed and merges are not independently verified    |
+| High     | Database invariants are incomplete                         | Invalid stock and ambiguous soft-delete behavior remain possible         |
+| Medium   | Redis is required at startup but absent from readiness     | Orchestrators can receive an incomplete health signal                    |
+| Medium   | Login limiting is process-local                            | Limits reset and diverge when the API has multiple replicas              |
+| Medium   | Generated OpenAPI and manual documentation are stale       | Consumers receive contracts that do not match runtime behavior           |
+| Medium   | Repository and tooling contain dead or redundant artifacts | Maintenance and onboarding remain unnecessarily confusing                |
 
 ## 4. Execution-unit sizing policy
 
@@ -78,44 +78,44 @@ Tests and documentation belong to each unit. The testing and documentation epics
 
 ## 5. Executable stabilization units
 
-| Unit | Bounded outcome | Required evidence |
-| --- | --- | --- |
-| `ECOM-002.1` | Make category list filters typed and consistent across HTTP, service, and repository | Handler and repository tests for every filter and malformed value |
-| `ECOM-002.2` | Make product list filters typed and consistent across HTTP, service, and repository | Handler and repository tests for category and active filters |
-| `ECOM-002.3` | Preserve field presence in category partial updates, including `false` and nullable parent behavior | Domain, service, and HTTP update matrix |
-| `ECOM-002.4` | Preserve field presence in product partial updates, including `false` | Domain, service, and HTTP update matrix |
-| `ECOM-002.5` | Prevent direct and indirect category hierarchy cycles | Ancestor-chain unit and PostgreSQL integration cases |
-| `ECOM-002.6` | Correct catalog domain errors and stop discarding post-write read failures | Error-mapping and failure-propagation tests |
-| `ECOM-003.1` | Align the SKU persistence entity and table mapping with the migrated schema | PostgreSQL mapping test that reads representative SKU rows |
-| `ECOM-003.2` | Implement typed SKU listing filters, pagination, validation, and visibility rules | HTTP and repository listing matrix |
-| `ECOM-003.3` | Add an explicit SKU availability projection backed by the stock table | Join, missing-stock, active-state, and OpenAPI contract tests |
-| `ECOM-004.1` | Introduce a focused category cache port and use the configured TTL | Unit tests with a cache fake and TTL assertions |
-| `ECOM-004.2` | Make category rename and delete invalidation cover ID, old slug, and new slug keys | Cache integration tests for update, rename, and deletion |
-| `ECOM-004.3` | Define Redis degradation and align startup/readiness behavior with that policy | Redis outage, recovery, and readiness integration tests |
-| `ECOM-004.4` | Add stock invariants and indexes required by existing access paths in one forward migration | Migration up/down and constraint/query-plan evidence |
-| `ECOM-004.5` | Reconcile GORM soft deletion with database triggers under one documented policy | Repository integration tests for delete, repeated delete, and visibility |
-| `ECOM-004.6` | Reconcile normalized email uniqueness and legacy administrator migration behavior | Upgrade, fresh-install, duplicate-email, and rollback tests |
-| `ECOM-005.1` | Close remaining catalog domain and service test debt not already covered by prior units | Package-level behavior matrix and coverage report |
-| `ECOM-005.2` | Build a reusable isolated PostgreSQL and Redis repository test harness | Repeatable local and CI execution without shared state |
-| `ECOM-005.3` | Add the login-to-admin-catalog integration journey | Valid, missing, expired, customer, disabled, and admin token scenarios |
-| `ECOM-005.4` | Add package coverage reporting and a monotonic ratchet | Deliberate threshold regression blocks the test command |
-| `ECOM-006.1` | Introduce the standard public error envelope with request correlation | Response and middleware contract tests |
-| `ECOM-006.2` | Translate validation failures and document the complete HTTP status matrix | Tests for `400`, `401`, `403`, `404`, `409`, `413`, `429`, and `500` |
-| `ECOM-006.3` | Add security headers and restrict documentation, metrics, and profiling in production | Environment-specific route and header tests |
-| `ECOM-006.4` | Replace the process-local login limiter with a shared implementation | Multi-instance semantics, expiry, failure-policy, and retry-header tests |
-| `ECOM-006.5` | Define and implement token revocation, role-change, and disabled-user behavior | Session-state and authorization integration tests |
-| `ECOM-007.1` | Close partially initialized resources and make health signals dependency-accurate | Startup failure, shutdown, liveness, and readiness tests |
-| `ECOM-007.2` | Use structured logs consistently and redact sensitive request/dependency data | Logger assertions and representative redaction tests |
-| `ECOM-007.3` | Add authentication, cache, repository, rate-limit, and dependency metrics | Metric registration and outcome-label tests |
-| `ECOM-007.4` | Add API healthcheck, initial dashboard, alerts, SLOs, and dependency runbook | Compose validation and documented failure drill |
-| `ECOM-008.1` | Remove dead composition, backup module, unused Node tooling, duplicate targets, and misleading ignore rules | Clean build plus repository inventory review |
-| `ECOM-008.2` | Pin development tools and expose one reproducible local quality command | Fresh-environment command verification |
-| `ECOM-008.3` | Add fast CI gates for modules, formatting, vet, lint, unit tests, and race tests | Deliberate format/test failures block a pull request |
-| `ECOM-008.4` | Add isolated PostgreSQL, Redis, migration, and integration CI gates | Deliberate schema and integration failures block a pull request |
-| `ECOM-008.5` | Add OpenAPI drift, secret, vulnerability, binary, container, and image gates | Deliberate drift or security fixture is detected safely |
-| `ECOM-009.1` | Reconcile annotations, generated OpenAPI, envelopes, routes, and status codes | Generation produces no unexplained diff and contract tests pass |
-| `ECOM-009.2` | Rewrite the reverse engineering and root README in English against verified behavior | Commands, routes, risks, and implementation status are evidence-backed |
-| `ECOM-009.3` | Remove obsolete documentation and validate the complete internal link graph | No duplicate source of truth or unresolved local documentation link |
+| Unit         | Bounded outcome                                                                                             | Required evidence                                                        |
+| ------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `ECOM-002.1` | Make category list filters typed and consistent across HTTP, service, and repository                        | Handler and repository tests for every filter and malformed value        |
+| `ECOM-002.2` | Make product list filters typed and consistent across HTTP, service, and repository                         | Handler and repository tests for category and active filters             |
+| `ECOM-002.3` | Preserve field presence in category partial updates, including `false` and nullable parent behavior         | Domain, service, and HTTP update matrix                                  |
+| `ECOM-002.4` | Preserve field presence in product partial updates, including `false`                                       | Domain, service, and HTTP update matrix                                  |
+| `ECOM-002.5` | Prevent direct and indirect category hierarchy cycles                                                       | Ancestor-chain unit and PostgreSQL integration cases                     |
+| `ECOM-002.6` | Correct catalog domain errors and stop discarding post-write read failures                                  | Error-mapping and failure-propagation tests                              |
+| `ECOM-003.1` | Align the SKU persistence entity and table mapping with the migrated schema                                 | PostgreSQL mapping test that reads representative SKU rows               |
+| `ECOM-003.2` | Implement typed SKU listing filters, pagination, validation, and visibility rules                           | HTTP and repository listing matrix                                       |
+| `ECOM-003.3` | Add an explicit SKU availability projection backed by the stock table                                       | Join, missing-stock, active-state, and OpenAPI contract tests            |
+| `ECOM-004.1` | Introduce a focused category cache port and use the configured TTL                                          | Unit tests with a cache fake and TTL assertions                          |
+| `ECOM-004.2` | Make category rename and delete invalidation cover ID, old slug, and new slug keys                          | Cache integration tests for update, rename, and deletion                 |
+| `ECOM-004.3` | Define Redis degradation and align startup/readiness behavior with that policy                              | Redis outage, recovery, and readiness integration tests                  |
+| `ECOM-004.4` | Add stock invariants and indexes required by existing access paths in one forward migration                 | Migration up/down and constraint/query-plan evidence                     |
+| `ECOM-004.5` | Reconcile GORM soft deletion with database triggers under one documented policy                             | Repository integration tests for delete, repeated delete, and visibility |
+| `ECOM-004.6` | Reconcile normalized email uniqueness and legacy administrator migration behavior                           | Upgrade, fresh-install, duplicate-email, and rollback tests              |
+| `ECOM-005.1` | Close remaining catalog domain and service test debt not already covered by prior units                     | Package-level behavior matrix and coverage report                        |
+| `ECOM-005.2` | Build a reusable isolated PostgreSQL and Redis repository test harness                                      | Repeatable local and CI execution without shared state                   |
+| `ECOM-005.3` | Add the login-to-admin-catalog integration journey                                                          | Valid, missing, expired, customer, disabled, and admin token scenarios   |
+| `ECOM-005.4` | Add package coverage reporting and a monotonic ratchet                                                      | Deliberate threshold regression blocks the test command                  |
+| `ECOM-006.1` | Introduce the standard public error envelope with request correlation                                       | Response and middleware contract tests                                   |
+| `ECOM-006.2` | Translate validation failures and document the complete HTTP status matrix                                  | Tests for `400`, `401`, `403`, `404`, `409`, `413`, `429`, and `500`     |
+| `ECOM-006.3` | Add security headers and restrict documentation, metrics, and profiling in production                       | Environment-specific route and header tests                              |
+| `ECOM-006.4` | Replace the process-local login limiter with a shared implementation                                        | Multi-instance semantics, expiry, failure-policy, and retry-header tests |
+| `ECOM-006.5` | Define and implement token revocation, role-change, and disabled-user behavior                              | Session-state and authorization integration tests                        |
+| `ECOM-007.1` | Close partially initialized resources and make health signals dependency-accurate                           | Startup failure, shutdown, liveness, and readiness tests                 |
+| `ECOM-007.2` | Use structured logs consistently and redact sensitive request/dependency data                               | Logger assertions and representative redaction tests                     |
+| `ECOM-007.3` | Add authentication, cache, repository, rate-limit, and dependency metrics                                   | Metric registration and outcome-label tests                              |
+| `ECOM-007.4` | Add API healthcheck, initial dashboard, alerts, SLOs, and dependency runbook                                | Compose validation and documented failure drill                          |
+| `ECOM-008.1` | Remove dead composition, backup module, unused Node tooling, duplicate targets, and misleading ignore rules | Clean build plus repository inventory review                             |
+| `ECOM-008.2` | Pin development tools and expose one reproducible local quality command                                     | Fresh-environment command verification                                   |
+| `ECOM-008.3` | Add fast CI gates for modules, formatting, vet, lint, unit tests, and race tests                            | Deliberate format/test failures block a pull request                     |
+| `ECOM-008.4` | Add isolated PostgreSQL, Redis, migration, and integration CI gates                                         | Deliberate schema and integration failures block a pull request          |
+| `ECOM-008.5` | Add OpenAPI drift, secret, vulnerability, binary, container, and image gates                                | Deliberate drift or security fixture is detected safely                  |
+| `ECOM-009.1` | Reconcile annotations, generated OpenAPI, envelopes, routes, and status codes                               | Generation produces no unexplained diff and contract tests pass          |
+| `ECOM-009.2` | Rewrite the reverse engineering and root README in English against verified behavior                        | Commands, routes, risks, and implementation status are evidence-backed   |
+| `ECOM-009.3` | Remove obsolete documentation and validate the complete internal link graph                                 | No duplicate source of truth or unresolved local documentation link      |
 
 ## 6. Stabilization epics
 
@@ -336,6 +336,29 @@ Completion criteria:
 - Every executable public endpoint is represented in OpenAPI.
 - All maintained documentation and public code documentation are in English.
 - All internal documentation links resolve.
+
+## 6. Stabilization epics
+
+...conteúdo atual dos épicos...
+
+## 7. Execution status
+
+| Unit       | Status  | Branch | Evidence              | Updated at |
+| ---------- | ------- | ------ | --------------------- | ---------- |
+| ECOM-002.1 | ready   | —      | —                     | 2026-09-11 |
+| ECOM-002.2 | planned | —      | Depends on ECOM-002.1 | 2026-09-11 |
+| ECOM-002.3 | planned | —      | Depends on ECOM-002.2 | 2026-09-11 |
+| ECOM-002.4 | planned | —      | Depends on ECOM-002.3 | 2026-09-11 |
+| ECOM-002.5 | planned | —      | Depends on ECOM-002.4 | 2026-09-11 |
+| ECOM-002.6 | planned | —      | Depends on ECOM-002.5 | 2026-09-11 |
+
+## 8. Execution order
+
+...conteúdo atual da seção Execution order...
+
+## 9. Definition of Done
+
+...conteúdo atual da seção Definition of Done...
 
 ## 7. Execution order
 
