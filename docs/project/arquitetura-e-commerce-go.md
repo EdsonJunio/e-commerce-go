@@ -704,6 +704,8 @@ Este documento consolidado registra a arquitetura proposta. Quando o conteúdo c
 | --- | --- |
 | `docs/project/README.md` | Índice, estado, leitura recomendada e fonte de verdade |
 | `01-engenharia-reversa-codigo-atual.md` | Evidências do código atual, riscos e lacunas |
+| `02-current-scope-quality-gap-analysis.md` | Estabilização priorizada do comportamento executável atual |
+| `03-complete-ecommerce-implementation-roadmap.md` | Construção incremental do serviço E-commerce deste repositório |
 | `arquitetura-e-commerce-go.md` | Este documento até extração controlada |
 | `requirements/` | Requisitos funcionais/não funcionais e rastreabilidade |
 | `architecture/adr/` | Decisões aceitas, contexto e alternativas |

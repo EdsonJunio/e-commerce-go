@@ -9,6 +9,8 @@ API de e-commerce em Go e núcleo de um ecossistema planejado com três serviço
 Antes de alterar código, consultar a documentação técnica em `docs/project/`:
 
 - [Engenharia reversa](./docs/project/01-engenharia-reversa-codigo-atual.md): structs, interfaces, métodos, dependências e fluxos do código executável atual.
+- [Current-scope quality gap analysis](./docs/project/02-current-scope-quality-gap-analysis.md): prioritized stabilization work for the existing API.
+- [Complete E-commerce implementation roadmap](./docs/project/03-complete-ecommerce-implementation-roadmap.md): incremental construction plan for this repository's E-commerce service.
 - [Arquitetura proposta](./docs/project/arquitetura-e-commerce-go.md): visão arquitetural e direção de evolução.
 - [Índice técnico](./docs/project/README.md): organização da documentação do projeto.
 

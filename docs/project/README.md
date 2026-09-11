@@ -7,6 +7,8 @@ Esta pasta contém a documentação técnica escrita e revisada manualmente. Os 
 | Documento | Estado | Finalidade |
 | --- | --- | --- |
 | [Engenharia reversa do código atual](./01-engenharia-reversa-codigo-atual.md) | Concluído em 2026-09-10 | Contexto de cada struct/interface, métodos, dependências, fluxos e comportamento observado |
+| [Current-scope quality gap analysis](./02-current-scope-quality-gap-analysis.md) | Active roadmap | Stabilization subtasks for the currently executable API |
+| [Complete E-commerce implementation roadmap](./03-complete-ecommerce-implementation-roadmap.md) | Proposed roadmap | Incremental construction plan for this repository's E-commerce service |
 | [Arquitetura proposta](./arquitetura-e-commerce-go.md) | Em evolução | Visão arquitetural, limites de serviço e direção técnica |
 | [Integração do Codex com o GitHub MCP](./integrations/github-mcp.md) | Leitura validada; escrita depende das permissões do PAT | Acesso seguro do Codex a repositórios, issues e pull requests |
 
