@@ -1,0 +1,16 @@
+.git
+.codex
+.env
+.env.*
+.idea
+.vscode
+node_modules
+coverage
+*.out
+*.test
+*.log
+docs/project
+scripts
+Makefile
+README.md
+docker-compose.yml

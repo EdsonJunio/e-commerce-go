@@ -1,19 +1,17 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:13-alpine
     container_name: ecommerce_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: ecommerce
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      POSTGRES_DB: ${DB_NAME:-ecommerce}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d ecommerce" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,20 +23,25 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - APP_ENVIRONMENT=development
       - SERVER_PORT=8081
+      - ENABLE_PPROF=false
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=1234
-      - DB_NAME=ecommerce
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
+      - DB_NAME=${DB_NAME:-ecommerce}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - JWT_ISSUER=ecommerce-api
+      - JWT_AUDIENCE=ecommerce-clients
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # Removemos 'volumes' e 'command' para usar o binário final da imagem
+    # The container runs the final image binary without source mounts.
 
   redis:
     image: redis:7-alpine
@@ -80,7 +83,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set}
     depends_on:
       - prometheus
 

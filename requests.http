@@ -4,6 +4,8 @@
 
 @hostUrl = http://localhost:8081
 @baseUrl = {{hostUrl}}/api/v1
+@adminEmail = {{$dotenv SEED_ADMIN_EMAIL}}
+@adminPassword = {{$dotenv SEED_ADMIN_PASSWORD}}
 
 #########################################################
 # AUTHENTICATION
@@ -16,8 +18,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@gmail.com",
-  "password": "hash123"
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
 }
 
 ### Auth Token (auto ou manual)
@@ -129,7 +131,6 @@ Authorization: Bearer {{authToken}}
 ### List skus (Public)
 GET {{baseUrl}}/skus
 Content-Type: application/json
-
 
 
 

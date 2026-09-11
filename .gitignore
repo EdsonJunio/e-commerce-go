@@ -1,7 +1,6 @@
 # --- Controle de Versão (CRÍTICO: Deixa o build muito mais rápido) ---
 .git
 .gitignore
-.dockerignore
 
 # --- IDEs e Configurações Locais ---
 .idea/

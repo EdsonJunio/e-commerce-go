@@ -3,7 +3,7 @@ PACKAGES = $(shell go list ./...)
 PACKAGES_PATH = $(shell go list -f '{{ .Dir }}' ./...)
 
 # Database Config for Migrations
-DB_URL=postgres://postgres:1234@localhost:5432/ecommerce?sslmode=disable
+DB_URL ?=
 MIGRATE_PATH=internal/database/migrations
 
 .PHONY: all
@@ -81,16 +81,19 @@ migrate-create:
 
 .PHONY: migrate-up
 migrate-up:
+	@test -n "$(DB_URL)" || (echo "Error: DB_URL is required" && exit 1)
 	@echo "Running migrations UP..."
 	@migrate -path $(MIGRATE_PATH) -database "$(DB_URL)" -verbose up
 
 .PHONY: migrate-down
 migrate-down:
+	@test -n "$(DB_URL)" || (echo "Error: DB_URL is required" && exit 1)
 	@echo "Running migration DOWN..."
 	@migrate -path $(MIGRATE_PATH) -database "$(DB_URL)" -verbose down 1
 
 .PHONY: migrate-force
 migrate-force:
+	@test -n "$(DB_URL)" || (echo "Error: DB_URL is required" && exit 1)
 	@echo "Forcing migration version..."
 	@migrate -path $(MIGRATE_PATH) -database "$(DB_URL)" force $(VERSION)
 
@@ -105,7 +108,7 @@ seed:
 .PHONY: run
 run:
 	@echo "Running App locally..."
-	@export SCOPE=local && go run cmd/api/main.go
+	@go run ./cmd/api
 
 .PHONY: air
 air:

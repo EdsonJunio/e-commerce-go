@@ -1,21 +1,44 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+type Role string
+
+const (
+	RoleCustomer Role = "customer"
+	RoleAdmin    Role = "admin"
+)
+
+type UserStatus string
+
+const (
+	UserStatusActive   UserStatus = "active"
+	UserStatusDisabled UserStatus = "disabled"
+)
 
 type User struct {
-	ID           int       `json:"id" gorm:"primaryKey"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	FullName     string    `json:"full_name"`
-	Phone        string    `json:"phone"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID           int
+	Email        string
+	PasswordHash string
+	FullName     string
+	Phone        string
+	Role         Role
+	Status       UserStatus
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (u User) CanAuthenticate() bool {
+	return u.ID > 0 && u.Status == UserStatusActive
 }
 
 type UserRepository interface {
-	GetByEmail(email string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
 }
 
 type AuthService interface {
-	Login(email, password string) (string, error)
+	Login(ctx context.Context, email, password string) (string, error)
 }

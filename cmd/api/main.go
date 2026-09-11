@@ -38,7 +38,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("invalid configuration: %v", err)
+	}
 
 	if err := logger.Init(logger.Config{
 		Environment: cfg.Environment,
@@ -118,8 +121,10 @@ func closeResources(db *gorm.DB, rdb *cache.RedisClient) {
 
 // buildServer orchestrates the dependency injection and router setup
 func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, *cache.RedisClient, error) {
-	// 1. Infrastructure
-	db, err := database.ConnectDB()
+	startupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	db, err := database.ConnectDB(startupCtx, cfg.Database)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -131,14 +136,21 @@ func buildServer(cfg *config.Config) (*http.Server, *gorm.DB, *cache.RedisClient
 
 	// 2. Router & Middlewares
 	r := gin.New()
+	if err := r.SetTrustedProxies(nil); err != nil {
+		return nil, nil, nil, err
+	}
 	setupMiddlewares(r, cfg)
 
 	// 3. Shared Services
-	jwtService := sharedService.NewJWTService(cfg)
+	jwtService, err := sharedService.NewJWTService(cfg.JWT)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	authMiddleware := middleware.NewAuthMiddleware(jwtService)
 
 	// 4. Modules Setup
-	setupIdentityModule(r, db, jwtService)
+	loginLimiter := middleware.NewFixedWindowRateLimiter(cfg.Security.LoginMaxAttempts, cfg.Security.LoginWindow)
+	setupIdentityModule(r, db, jwtService, loginLimiter.Handle())
 	setupCatalogModule(r, db, rdb, authMiddleware)
 
 	// 5. Documentation & Health
@@ -164,6 +176,7 @@ func setupMiddlewares(r *gin.Engine, cfg *config.Config) {
 	r.Use(requestid.New())
 	r.Use(logger.RecoveryWithLogger())
 	r.Use(logger.GinLoggerMiddleware())
+	r.Use(middleware.LimitRequestBody(cfg.Server.MaxBodyBytes))
 	r.Use(middleware.ErrorHandler())
 
 	// CORS
@@ -185,16 +198,16 @@ func setupOpsRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	registerHealthEndpoints(r, db, cfg.Version)
 
 	// Pprof
-	if cfg.Environment != "production" || os.Getenv("ENABLE_PPROF") == "true" {
+	if cfg.Server.EnablePprof {
 		pprof.Register(r, "/debug/pprof")
 	}
 }
 
-func setupIdentityModule(r *gin.Engine, db *gorm.DB, jwtSvc sharedService.JWTService) {
+func setupIdentityModule(r *gin.Engine, db *gorm.DB, jwtSvc sharedService.JWTService, loginLimiter gin.HandlerFunc) {
 	repo := identityRepo.NewUserRepository(db)
 	svc := identitySvc.NewAuthService(repo, jwtSvc)
 	handler := identityHTTP.NewAuthHandler(svc)
-	handler.RegisterRoutes(r)
+	handler.RegisterRoutes(r, loginLimiter)
 }
 
 func setupCatalogModule(r *gin.Engine, db *gorm.DB, rdb *cache.RedisClient, auth *middleware.AuthMiddleware) {
