@@ -1,9 +1,8 @@
 # GitHub's official remote MCP server.
-# Keep the token outside the repository and expose it as
-# GITHUB_PAT_TOKEN before starting Codex.
+# Read the token at connection time without storing it in this config.
 [mcp_servers.github]
 url = "https://api.githubcopilot.com/mcp/x/all"
-bearer_token_env_var = "GITHUB_PAT_TOKEN"
+http_headers_helper = "/bin/sh /home/desk/Projects/e-commerce-go/.codex/github-mcp-headers.sh"
 enabled = true
 required = false
 startup_timeout_sec = 20
