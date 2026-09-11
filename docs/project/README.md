@@ -8,6 +8,7 @@ Esta pasta contém a documentação técnica escrita e revisada manualmente. Os 
 | --- | --- | --- |
 | [Diagnóstico do estado atual](./01-diagnostico-atual.md) | Concluído em 2026-09-07 | Inventário do código, funcionalidades, lacunas, riscos e dívida técnica |
 | [Plano de execução priorizado](./02-plano-de-execucao.md) | Proposta inicial | Sequência de etapas pequenas, critérios de conclusão e entregáveis |
+| [Engenharia reversa do código atual](./03-engenharia-reversa-codigo-atual.md) | Concluído em 2026-09-10 | Contexto de cada struct/interface, métodos, dependências, fluxos e comportamento observado |
 | [Integração do Codex com o GitHub MCP](./integrations/github-mcp.md) | Leitura validada; escrita depende das permissões do PAT | Acesso seguro do Codex a repositórios, issues e pull requests |
 
 ## Documentos previstos
