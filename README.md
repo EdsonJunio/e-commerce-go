@@ -6,11 +6,10 @@ API de e-commerce em Go e núcleo de um ecossistema planejado com três serviço
 
 ## Documentação e fonte de verdade
 
-Antes de alterar código, consultar o diagnóstico técnico e o plano de execução existentes em `docs/project/`:
+Antes de alterar código, consultar a documentação técnica em `docs/project/`:
 
-- [Diagnóstico técnico](./docs/project/01-diagnostico-atual.md): situação atual, lacunas, riscos e evidências.
-- [Plano de execução](./docs/project/02-plano-de-execucao.md): sequência de trabalho e critérios de conclusão.
-- [Engenharia reversa](./docs/project/03-engenharia-reversa-codigo-atual.md): structs, interfaces, métodos, dependências e fluxos do código executável atual.
+- [Engenharia reversa](./docs/project/01-engenharia-reversa-codigo-atual.md): structs, interfaces, métodos, dependências e fluxos do código executável atual.
+- [Arquitetura proposta](./docs/project/arquitetura-e-commerce-go.md): visão arquitetural e direção de evolução.
 - [Índice técnico](./docs/project/README.md): organização da documentação do projeto.
 
 Este README consolida a visão alvo discutida para o projeto. O plano existente continua sendo a referência de execução: estabilizar o monólito modular, entregar cortes verticais e materializar serviços independentes gradualmente. As escolhas futuras deverão ganhar ADRs e contratos detalhados antes da implementação; esta atualização documental não conclui essas etapas. Arquivos Swagger gerados descrevem contratos HTTP; decisões arquiteturais e regras de negócio pertencem à documentação humana.
