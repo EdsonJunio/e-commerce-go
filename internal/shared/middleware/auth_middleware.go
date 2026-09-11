@@ -4,11 +4,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-
 	"e-commerce-go/internal/shared/response"
 	"e-commerce-go/internal/shared/service"
+
+	"github.com/gin-gonic/gin"
+)
+
+const (
+	ContextUserID = "user_id"
+	ContextRole   = "role"
 )
 
 type AuthMiddleware struct {
@@ -21,53 +25,31 @@ func NewAuthMiddleware(jwtService service.JWTService) *AuthMiddleware {
 
 func (m *AuthMiddleware) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Error(
-				c,
-				http.StatusUnauthorized,
-				"unauthorized",
-				"Authorization header is missing",
-			)
-			c.Abort()
+		parts := strings.Fields(c.GetHeader("Authorization"))
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			response.AbortWithError(c, http.StatusUnauthorized, "unauthenticated", "valid Bearer authentication is required")
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Error(
-				c,
-				http.StatusUnauthorized,
-				"unauthorized",
-				"Invalid authorization format. Use: Bearer <token>",
-			)
-			c.Abort()
+		claims, err := m.jwtService.ValidateToken(parts[1])
+		if err != nil {
+			response.AbortWithError(c, http.StatusUnauthorized, "unauthenticated", "invalid or expired token")
 			return
 		}
 
-		tokenString := parts[1]
+		c.Set(ContextUserID, claims.UserID)
+		c.Set(ContextRole, claims.Role)
+		c.Next()
+	}
+}
 
-		token, err := m.jwtService.ValidateToken(tokenString)
-		if err != nil || !token.Valid {
-			response.Error(
-				c,
-				http.StatusUnauthorized,
-				"unauthorized",
-				"Invalid or expired token",
-			)
-			c.Abort()
+func RequireRole(role string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		currentRole, exists := c.Get(ContextRole)
+		if !exists || currentRole != role {
+			response.AbortWithError(c, http.StatusForbidden, "forbidden", "insufficient permissions")
 			return
 		}
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if userID, ok := claims["user_id"].(float64); ok {
-				c.Set("userID", int(userID))
-			}
-			if isAdmin, ok := claims["is_admin"].(bool); ok {
-				c.Set("isAdmin", isAdmin)
-			}
-		}
-
 		c.Next()
 	}
 }

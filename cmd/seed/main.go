@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
@@ -25,9 +26,11 @@ func main() {
 	// Initialize random seed
 	gofakeit.Seed(time.Now().UnixNano())
 
-	// Connection string
-	connStr := "postgres://postgres:1234@localhost:5432/ecommerce?sslmode=disable"
-	db, err := sql.Open("pgx", connStr)
+	cfg, err := loadSeedConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := sql.Open("pgx", cfg.databaseURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
@@ -43,7 +46,7 @@ func main() {
 	cleanTables(db)
 
 	// 2. Base Data (Users & Categories)
-	userIDs := seedUsers(db)
+	userIDs := seedUsers(db, cfg)
 	addressIDs := seedAddresses(db, userIDs) // Create addresses for users
 	categoryIDs := seedCategories(db)
 
@@ -58,6 +61,35 @@ func main() {
 	seedOrdersAndShipments(db, userIDs, addressIDs, skuIDs)
 
 	fmt.Println("Database seeded successfully with full dataset!")
+}
+
+type seedConfig struct {
+	databaseURL     string
+	adminEmail      string
+	adminPassword   string
+	defaultPassword string
+}
+
+func loadSeedConfig() (seedConfig, error) {
+	if os.Getenv("APP_ENVIRONMENT") != "development" {
+		return seedConfig{}, fmt.Errorf("seed is restricted to APP_ENVIRONMENT=development")
+	}
+	if os.Getenv("SEED_CONFIRM") != "truncate-ecommerce" {
+		return seedConfig{}, fmt.Errorf("set SEED_CONFIRM=truncate-ecommerce to acknowledge destructive seeding")
+	}
+	cfg := seedConfig{
+		databaseURL:     os.Getenv("SEED_DATABASE_URL"),
+		adminEmail:      os.Getenv("SEED_ADMIN_EMAIL"),
+		adminPassword:   os.Getenv("SEED_ADMIN_PASSWORD"),
+		defaultPassword: os.Getenv("SEED_USER_PASSWORD"),
+	}
+	if cfg.databaseURL == "" || cfg.adminEmail == "" {
+		return seedConfig{}, fmt.Errorf("SEED_DATABASE_URL and SEED_ADMIN_EMAIL are required")
+	}
+	if len(cfg.adminPassword) < 12 || len(cfg.defaultPassword) < 12 {
+		return seedConfig{}, fmt.Errorf("seed passwords must contain at least 12 characters")
+	}
+	return cfg, nil
 }
 
 func cleanTables(db *sql.DB) {
@@ -81,33 +113,38 @@ func cleanTables(db *sql.DB) {
 
 // --- USERS & ADDRESSES ---
 
-func seedUsers(db *sql.DB) []int {
+func seedUsers(db *sql.DB, cfg seedConfig) []int {
 	fmt.Printf("Seeding %d users...\n", TotalUsers)
 	var ids []int
 
 	// 1. Create fixed Admin user
 	var adminID int
 
-	// CRIPTOGRAFA A SENHA ANTES DE SALVAR
-	adminPass, _ := security.HashPassword("hash123") // A senha para logar será "hash123"
+	adminPass, err := security.HashPassword(cfg.adminPassword)
+	if err != nil {
+		log.Fatalf("Failed to hash admin password: %v", err)
+	}
 
-	query := `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO users (email, password_hash, full_name, phone, role, status) VALUES ($1, $2, $3, $4, 'admin', 'active') RETURNING id`
 
-	// Note que passamos 'adminPass' (o hash) e não a string pura
-	err := db.QueryRow(query, "admin@gmail.com", adminPass, "Admin User", "+551199999999").Scan(&adminID)
+	// Persist the hash, never the plaintext password.
+	err = db.QueryRow(query, cfg.adminEmail, adminPass, "Admin User", "+551199999999").Scan(&adminID)
 	if err != nil {
 		log.Fatalf("Failed to create admin: %v", err)
 	}
 	ids = append(ids, adminID)
 
 	// 2. Create fake users
-	query = `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4) RETURNING id`
+	query = `INSERT INTO users (email, password_hash, full_name, phone, role, status) VALUES ($1, $2, $3, $4, 'customer', 'active') RETURNING id`
 	for i := 0; i < TotalUsers; i++ {
 		var id int
 		email := gofakeit.Email()
 
-		// Criptografa a senha fake também
-		fakePass, _ := security.HashPassword("123456") // Todos os users fakes terão senha "123456"
+		fakePass, hashErr := security.HashPassword(cfg.defaultPassword)
+		if hashErr != nil {
+			log.Printf("Error hashing generated user password: %v", hashErr)
+			continue
+		}
 
 		name := gofakeit.Name()
 		phone := gofakeit.Phone()

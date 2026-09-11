@@ -43,7 +43,7 @@ O anexo contém uma cadeia com formato de token pessoal do GitHub. O valor foi e
 | Swagger | `docs.go`, `swagger.json`, `swagger.yaml` | Comando gerador, versão, registro e aderência às rotas |
 | Testes | Arquivos de teste de produto/logger e mocks | Cobertura comportamental e resultado da suíte |
 | Observabilidade | Logger e configuração do Prometheus | Métricas expostas, coleta e alertas |
-| Documentação | `docs/project/01-diagnostico-atual.md` e plano | Conteúdo e compatibilidade com esta proposta |
+| Documentação | `docs/project/README.md` e engenharia reversa | Conteúdo e compatibilidade com esta proposta |
 | Ferramentas | Docker, Makefile, scripts, arquivos Node | Necessidade e funcionamento; não remover por aparência |
 
 ### Problemas identificáveis no SQL
@@ -698,14 +698,15 @@ Comportamento e erros definidos; domínio preservado; testes adequados ao risco;
 
 ## 15. Organização da documentação no repositório
 
-Este documento consolidado pode entrar como `docs/project/03-arquitetura-proposta.md`. Não substituir silenciosamente o diagnóstico e o plano já existentes. Quando o conteúdo crescer, extrair os capítulos para arquivos temáticos e manter um índice com links, evitando duas fontes divergentes.
+Este documento consolidado registra a arquitetura proposta. Quando o conteúdo crescer, extrair os capítulos para arquivos temáticos e manter um índice com links, evitando duas fontes divergentes.
 
 | Destino futuro | Conteúdo |
 | --- | --- |
 | `docs/project/README.md` | Índice, estado, leitura recomendada e fonte de verdade |
-| `01-diagnostico-atual.md` | Evidências do código atual, riscos e lacunas |
-| `02-plano-de-execucao.md` | Etapa atual, backlog, critérios e commits |
-| `03-arquitetura-proposta.md` | Este documento até extração controlada |
+| `01-engenharia-reversa-codigo-atual.md` | Evidências do código atual, riscos e lacunas |
+| `02-current-scope-quality-gap-analysis.md` | Estabilização priorizada do comportamento executável atual |
+| `03-complete-ecommerce-implementation-roadmap.md` | Construção incremental do serviço E-commerce deste repositório |
+| `arquitetura-e-commerce-go.md` | Este documento até extração controlada |
 | `requirements/` | Requisitos funcionais/não funcionais e rastreabilidade |
 | `architecture/adr/` | Decisões aceitas, contexto e alternativas |
 | `data/` | Modelo de cada serviço, dicionário e migrações |

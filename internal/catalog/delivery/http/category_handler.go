@@ -49,7 +49,7 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine, auth *middl
 			category.GET("/slug/:slug", h.GetCategoryBySlug)
 
 			protected := category.Group("")
-			protected.Use(auth.Handle())
+			protected.Use(auth.Handle(), middleware.RequireRole("admin"))
 			{
 				protected.POST("", h.CreateCategory)
 				protected.PUT("/:id", h.UpdateCategory)
@@ -242,6 +242,9 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 	var req CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if middleware.RejectOversizedBody(c, err) {
+			return
+		}
 		logger.L().Warn("invalid request in CreateCategory", zap.Error(err), zap.String("request_id", reqID))
 		response.Error(c, http.StatusBadRequest, "invalid_request", err.Error())
 		return
@@ -310,6 +313,9 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 
 	var req UpdateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if middleware.RejectOversizedBody(c, err) {
+			return
+		}
 		logger.L().Warn(
 			"Invalid request body in updateCategory",
 			zap.Error(err),

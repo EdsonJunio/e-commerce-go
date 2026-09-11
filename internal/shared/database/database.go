@@ -15,43 +15,33 @@ import (
 	glogger "gorm.io/gorm/logger"
 )
 
-// ConnectDB establishes a connection to the database using the loaded configuration.
-// It retries with exponential backoff until the context expires or max retries are reached.
-func ConnectDB() (*gorm.DB, error) {
-	cfg := config.Load()
-
-	host := cfg.Database.Host
-	if os.Getenv("APP_ENV") == "local" {
-		host = "127.0.0.1"
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
+func ConnectDB(ctx context.Context, cfg config.DatabaseConfig) (*gorm.DB, error) {
+	host := cfg.Host
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host,
-		cfg.Database.Port,
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Name,
-		cfg.Database.SSLMode,
+		cfg.Port,
+		cfg.User,
+		cfg.Password,
+		cfg.Name,
+		cfg.SSLMode,
 	)
 
 	masked := fmt.Sprintf(
 		"host=%s port=%s user=%s dbname=%s sslmode=%s",
 		host,
-		cfg.Database.Port,
-		cfg.Database.User,
-		cfg.Database.Name,
-		cfg.Database.SSLMode,
+		cfg.Port,
+		cfg.User,
+		cfg.Name,
+		cfg.SSLMode,
 	)
 	fmt.Fprintf(os.Stdout, "[db] Attempting to connect to database: %s\n", masked)
 
 	gormCfg := &gorm.Config{
 		SkipDefaultTransaction: true,
 		PrepareStmt:            true,
-		Logger:                 newGormLogger(cfg.Database.LogLevel),
+		Logger:                 newGormLogger(cfg.LogLevel),
 	}
 
 	var (
@@ -60,13 +50,13 @@ func ConnectDB() (*gorm.DB, error) {
 		err   error
 	)
 
-	maxRetries := 30
-	retryDelay := 2 * time.Second
+	const maxRetries = 8
+	retryDelay := 250 * time.Millisecond
 
 	for i := 0; i < maxRetries; i++ {
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("context canceled while connecting to database")
+			return nil, fmt.Errorf("database connection canceled: %w", ctx.Err())
 		default:
 			db, err = gorm.Open(postgres.Open(dsn), gormCfg)
 			if err == nil {
@@ -75,7 +65,7 @@ func ConnectDB() (*gorm.DB, error) {
 					return nil, fmt.Errorf("failed to get database instance: %w", err)
 				}
 
-				configurePool(sqlDB)
+				configurePool(sqlDB, cfg)
 
 				if err = sqlDB.PingContext(ctx); err == nil {
 					fmt.Fprintf(
@@ -85,16 +75,25 @@ func ConnectDB() (*gorm.DB, error) {
 					)
 					return db, nil
 				}
+				_ = sqlDB.Close()
 			}
 
 			if i < maxRetries-1 {
-				nextRetry := time.Duration(i+1) * retryDelay
 				fmt.Fprintf(
 					os.Stdout,
 					"[db] Attempt %d/%d failed: %v. Retrying in %v...\n",
-					i+1, maxRetries, err, nextRetry,
+					i+1, maxRetries, err, retryDelay,
 				)
-				time.Sleep(nextRetry)
+				timer := time.NewTimer(retryDelay)
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return nil, fmt.Errorf("database connection canceled: %w", ctx.Err())
+				case <-timer.C:
+				}
+				if retryDelay < 8*time.Second {
+					retryDelay *= 2
+				}
 			}
 		}
 	}
@@ -107,18 +106,16 @@ func ConnectDB() (*gorm.DB, error) {
 }
 
 // configurePool sets up the database connection pool with values from configuration.
-func configurePool(sqlDB *sql.DB) {
-	cfg := config.Load()
-
-	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
-	sqlDB.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
+func configurePool(sqlDB *sql.DB, cfg config.DatabaseConfig) {
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
 	log.Printf(
 		"Database pool configured: MaxIdleConns=%d, MaxOpenConns=%d, ConnMaxLifetime=%v",
-		cfg.Database.MaxIdleConns,
-		cfg.Database.MaxOpenConns,
-		cfg.Database.ConnMaxLifetime,
+		cfg.MaxIdleConns,
+		cfg.MaxOpenConns,
+		cfg.ConnMaxLifetime,
 	)
 }
 

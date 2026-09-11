@@ -2,8 +2,11 @@ package http
 
 import (
 	"e-commerce-go/internal/identity/domain"
+	"e-commerce-go/internal/shared/middleware"
 	"e-commerce-go/internal/shared/response"
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,16 +20,17 @@ func NewAuthHandler(service domain.AuthService) *AuthHandler {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email" example:"admin@gmail.com"`
-	Password string `json:"password" binding:"required" example:"hash123"`
+	Email    string `json:"email" binding:"required,email" example:"admin@example.com"`
+	Password string `json:"password" binding:"required" example:"replace-with-your-password"`
 }
 
 type LoginResponse struct {
 	Token string `json:"token" example:"eyJhbGciOiJIUzI1Ni..."`
 }
 
-func (h *AuthHandler) RegisterRoutes(r *gin.Engine) {
+func (h *AuthHandler) RegisterRoutes(r *gin.Engine, handlers ...gin.HandlerFunc) {
 	auth := r.Group("/api/v1/auth")
+	auth.Use(handlers...)
 	{
 		auth.POST("/login", h.Login)
 	}
@@ -46,6 +50,9 @@ func (h *AuthHandler) RegisterRoutes(r *gin.Engine) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if middleware.RejectOversizedBody(c, err) {
+			return
+		}
 		response.Error(
 			c,
 			http.StatusBadRequest,
@@ -56,8 +63,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.Login(req.Email, req.Password)
+	token, err := h.service.Login(c.Request.Context(), strings.TrimSpace(req.Email), req.Password)
 	if err != nil {
+		if !errors.Is(err, domain.ErrInvalidCredentials) {
+			response.Error(c, http.StatusInternalServerError, "internal_error", "internal server error")
+			return
+		}
 		response.Error(
 			c,
 			http.StatusUnauthorized,

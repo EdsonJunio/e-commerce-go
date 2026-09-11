@@ -53,7 +53,7 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine, auth *middlew
 			products.GET("/slug/:slug", h.GetProductBySlug)
 
 			protected := products.Group("")
-			protected.Use(auth.Handle())
+			protected.Use(auth.Handle(), middleware.RequireRole("admin"))
 			{
 				protected.POST("", h.CreateProduct)
 				protected.PUT("/:id", h.UpdateProduct)
@@ -246,6 +246,9 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if middleware.RejectOversizedBody(c, err) {
+			return
+		}
 		logger.L().Warn(
 			"invalid request in CreateProduct",
 			zap.Error(err),
@@ -326,6 +329,9 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 
 	var req UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if middleware.RejectOversizedBody(c, err) {
+			return
+		}
 		logger.L().Warn(
 			"invalid request in UpdateProduct",
 			zap.Error(err),

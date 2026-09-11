@@ -669,8 +669,6 @@ Assim, esta engenharia reversa combina leitura estática e compilação/testes g
 | Média | OpenAPI diverge dos envelopes e omite SKU | Consumidores recebem um contrato incompleto |
 | Média | Configuração carregada múltiplas vezes | Dificulta validação única e previsibilidade |
 
-O inventário de riscos mais amplo e o plano de correção permanecem em [`01-diagnostico-atual.md`](./01-diagnostico-atual.md) e [`02-plano-de-execucao.md`](./02-plano-de-execucao.md).
-
 ## 19. Resumo por unidade
 
 | Unidade | Estado | Responsabilidade atual |
