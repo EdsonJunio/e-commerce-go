@@ -345,7 +345,7 @@ Completion criteria:
 
 | Unit       | Status  | Branch | Evidence              | Updated at |
 | ---------- | ------- | ------ | --------------------- | ---------- |
-| ECOM-002.1 | ready   | —      | —                     | 2026-09-11 |
+| ECOM-002.1 | done    | `fix/ecom-002-1-category-list-filters` | Handler regression matrix and focused PostgreSQL repository test; format, vet, unit, race, and build pass; lint tool unavailable and Swagger generation blocked by pre-existing annotation syntax | 2026-09-11 |
 | ECOM-002.2 | planned | —      | Depends on ECOM-002.1 | 2026-09-11 |
 | ECOM-002.3 | planned | —      | Depends on ECOM-002.2 | 2026-09-11 |
 | ECOM-002.4 | planned | —      | Depends on ECOM-002.3 | 2026-09-11 |
