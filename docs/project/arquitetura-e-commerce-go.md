@@ -272,6 +272,8 @@ Campos monetários são BIGINT não negativos quando representarem montantes, `c
 | `shipments` | order_id, tracking_code, status, custos, datas e medidas | Histórico preservado; medidas positivas quando presentes |
 | `order_status_history` | order_id, from_status, to_status, reason, actor, event_id | Append-only; transições auditáveis |
 
+Current implementation update (ECOM-002.3, September 12, 2026): the existing category update route preserves omitted fields, accepts `is_active: false`, and treats `parent_id: null` as removal of the optional relationship. This describes current behavior; cycle prevention in the table remains a target for ECOM-002.5.
+
 Tabelas técnicas: `idempotency_keys`, `outbox_events`, `inbox_messages`, `audit_events`. Tokens de sessão/refresh, se utilizados, exigem tabela com hash, expiração, revogação e rotação; não guardar token bruto.
 
 ```mermaid

@@ -59,23 +59,23 @@ func (s *categoryService) CreateCategory(ctx context.Context, category *domain.C
 	return s.repo.Create(ctx, category)
 }
 
-func (s *categoryService) UpdateCategory(ctx context.Context, id int, req *domain.Category) error {
+func (s *categoryService) UpdateCategory(ctx context.Context, id int, changes domain.CategoryChanges) error {
 	existing, err := s.findCategoryOrFail(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	existing.UpdateState(req)
+	existing.UpdateState(changes)
 
 	if err := existing.Validate(); err != nil {
 		return err
 	}
 
-	if req.ParentID != nil && *req.ParentID > 0 {
-		if *req.ParentID == id {
+	if changes.ParentID != nil {
+		if *changes.ParentID <= 0 || *changes.ParentID == id {
 			return domain.ErrInvalidCategoryReference
 		}
-		if err := s.ensureParentExists(ctx, *req.ParentID); err != nil {
+		if err := s.ensureParentExists(ctx, *changes.ParentID); err != nil {
 			return err
 		}
 	}

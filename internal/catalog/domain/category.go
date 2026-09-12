@@ -26,6 +26,15 @@ type CategoryListFilters struct {
 	IsActive *bool
 }
 
+type CategoryChanges struct {
+	Name        *string
+	Slug        *string
+	Description *string
+	ParentID    *int
+	ClearParent bool
+	IsActive    *bool
+}
+
 func (Category) TableName() string { return "categories" }
 
 func (c *Category) Validate() error {
@@ -46,22 +55,24 @@ func (c *Category) Validate() error {
 	return nil
 }
 
-func (c *Category) UpdateState(newData *Category) {
-	if newData.Name != "" {
-		c.Name = strings.TrimSpace(newData.Name)
+func (c *Category) UpdateState(changes CategoryChanges) {
+	if changes.Name != nil {
+		c.Name = strings.TrimSpace(*changes.Name)
 	}
-	if newData.Slug != "" {
-		c.Slug = strings.TrimSpace(newData.Slug)
+	if changes.Slug != nil {
+		c.Slug = strings.TrimSpace(*changes.Slug)
 	}
-	if newData.Description != "" {
-		c.Description = strings.TrimSpace(newData.Description)
+	if changes.Description != nil {
+		c.Description = strings.TrimSpace(*changes.Description)
 	}
-
-	if newData.ParentID != nil {
-		c.ParentID = newData.ParentID
+	if changes.ClearParent {
+		c.ParentID = nil
+	} else if changes.ParentID != nil {
+		c.ParentID = changes.ParentID
 	}
-
-	c.IsActive = newData.IsActive
+	if changes.IsActive != nil {
+		c.IsActive = *changes.IsActive
+	}
 }
 
 type CategoryRepository interface {
@@ -78,6 +89,6 @@ type CategoryService interface {
 	GetCategoryByID(ctx context.Context, id int) (*Category, error)
 	GetCategoryBySlug(ctx context.Context, slug string) (*Category, error)
 	CreateCategory(ctx context.Context, category *Category) error
-	UpdateCategory(ctx context.Context, id int, category *Category) error
+	UpdateCategory(ctx context.Context, id int, changes CategoryChanges) error
 	DeleteCategory(ctx context.Context, id int) error
 }

@@ -1,7 +1,8 @@
 package http
 
 import (
-	"e-commerce-go/internal/shared/middleware"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"e-commerce-go/internal/catalog/domain"
+	"e-commerce-go/internal/shared/middleware"
 	"e-commerce-go/internal/shared/response"
 	"e-commerce-go/internal/shared/transport"
 	"e-commerce-go/pkg/logger"
@@ -28,11 +30,11 @@ type CreateCategoryRequest struct {
 }
 
 type UpdateCategoryRequest struct {
-	Name        *string `json:"name,omitempty" example:"Home Appliances"`
-	Slug        *string `json:"slug,omitempty" example:"home-appliances"`
-	ParentID    *uint   `json:"parent_id,omitempty" example:"2"`
-	IsActive    *bool   `json:"is_active,omitempty" example:"false"`
-	Description *string `json:"description,omitempty" example:"Updated description"`
+	Name        *string         `json:"name,omitempty" example:"Home Appliances"`
+	Slug        *string         `json:"slug,omitempty" example:"home-appliances"`
+	ParentID    json.RawMessage `json:"parent_id,omitempty" swaggertype:"integer" example:"2"`
+	IsActive    *bool           `json:"is_active,omitempty" example:"false"`
+	Description *string         `json:"description,omitempty" example:"Updated description"`
 }
 
 func NewCategoryHandler(service domain.CategoryService) *CategoryHandler {
@@ -293,7 +295,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 // UpdateCategory godoc
 // @Summary      Update a category
-// @Description  Update specific fields of a category by ID
+// @Description  Update only supplied fields. Omitted fields are unchanged; parent_id null clears the parent and is_active false deactivates the category.
 // @Tags         categories
 // @Accept       JSON
 // @Produce      JSON
@@ -335,28 +337,23 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	updateData := &domain.Category{
-		ID: id,
-	}
-
-	if req.Name != nil {
-		updateData.Name = strings.TrimSpace(*req.Name)
-	}
-	if req.Slug != nil {
-		updateData.Slug = strings.TrimSpace(*req.Slug)
+	changes := domain.CategoryChanges{
+		Name: req.Name, Slug: req.Slug, Description: req.Description, IsActive: req.IsActive,
 	}
 	if req.ParentID != nil {
-		parentIDValue := int(*req.ParentID)
-		updateData.ParentID = &parentIDValue
-	}
-	if req.IsActive != nil {
-		updateData.IsActive = *req.IsActive
-	}
-	if req.Description != nil {
-		updateData.Description = *req.Description
+		if bytes.Equal(bytes.TrimSpace(req.ParentID), []byte("null")) {
+			changes.ClearParent = true
+		} else {
+			var parentID int
+			if err := json.Unmarshal(req.ParentID, &parentID); err != nil || parentID <= 0 {
+				response.Error(c, http.StatusBadRequest, "invalid_request", "parent_id must be a positive integer or null")
+				return
+			}
+			changes.ParentID = &parentID
+		}
 	}
 
-	if err := h.service.UpdateCategory(c.Request.Context(), id, updateData); err != nil {
+	if err := h.service.UpdateCategory(c.Request.Context(), id, changes); err != nil {
 		mapping := transport.HTTPErrorMapper(err)
 
 		transport.LogByErrorMapping(
