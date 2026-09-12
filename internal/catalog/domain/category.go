@@ -21,6 +21,11 @@ type Category struct {
 	DeletedReason string         `gorm:"column:deleted_reason" json:"deleted_reason"`
 }
 
+type CategoryListFilters struct {
+	ParentID *int
+	IsActive *bool
+}
+
 func (Category) TableName() string { return "categories" }
 
 func (c *Category) Validate() error {
@@ -60,7 +65,7 @@ func (c *Category) UpdateState(newData *Category) {
 }
 
 type CategoryRepository interface {
-	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]Category, int64, error)
+	List(ctx context.Context, limit, offset int, filters CategoryListFilters) ([]Category, int64, error)
 	FindByID(ctx context.Context, id int) (*Category, error)
 	FindBySlug(ctx context.Context, slug string) (*Category, error)
 	Create(ctx context.Context, category *Category) error
@@ -69,7 +74,7 @@ type CategoryRepository interface {
 }
 
 type CategoryService interface {
-	ListCategories(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Category, int64, error)
+	ListCategories(ctx context.Context, p Pagination, filters CategoryListFilters) ([]Category, int64, error)
 	GetCategoryByID(ctx context.Context, id int) (*Category, error)
 	GetCategoryBySlug(ctx context.Context, slug string) (*Category, error)
 	CreateCategory(ctx context.Context, category *Category) error

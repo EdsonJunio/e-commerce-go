@@ -16,7 +16,7 @@ func NewCategoryService(
 	return &categoryService{repo: repo}
 }
 
-func (s *categoryService) ListCategories(ctx context.Context, p domain.Pagination, filters map[string]interface{}) ([]domain.Category, int64, error) {
+func (s *categoryService) ListCategories(ctx context.Context, p domain.Pagination, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
 	return s.repo.List(ctx, p.Limit, p.Offset, filters)
 }
 

@@ -70,6 +70,7 @@ func (h *CategoryHandler) RegisterCategoryRoutes(router *gin.Engine, auth *middl
 // @Param        parent_id  query     int     false  "Filter by Parent ID"
 // @Param        is_active  query     bool    false  "Filter by Status"
 // @Success      200        {object}  response.PaginatedResponse
+// @Failure      400        {object}  response.ErrorResponse
 // @Failure      500        {object}  response.ErrorResponse
 // @Router       /categories [get]
 func (h *CategoryHandler) ListCategories(c *gin.Context) {
@@ -78,16 +79,25 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	pagination := domain.NewPagination(page, limit)
 
-	filters := make(map[string]interface{})
-	if parentID := c.Query("parent_id"); parentID != "" {
-		if parID, err := strconv.Atoi(parentID); err == nil {
-			filters["parent_id = ?"] = parID
+	filters := domain.CategoryListFilters{}
+	query := c.Request.URL.Query()
+	if _, present := query["parent_id"]; present {
+		parentID := query.Get("parent_id")
+		parsedParentID, err := strconv.Atoi(parentID)
+		if err != nil || parsedParentID <= 0 {
+			response.Error(c, http.StatusBadRequest, "invalid_request", "parent_id must be a positive integer")
+			return
 		}
+		filters.ParentID = &parsedParentID
 	}
-	if isActive := c.Query("is_active"); isActive != "" {
-		if active, err := strconv.ParseBool(isActive); err == nil {
-			filters["is_active = ?"] = active
+	if _, present := query["is_active"]; present {
+		isActive := query.Get("is_active")
+		parsedIsActive, err := strconv.ParseBool(isActive)
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, "invalid_request", "is_active must be a boolean")
+			return
 		}
+		filters.IsActive = &parsedIsActive
 	}
 
 	categories, total, err := h.service.ListCategories(c.Request.Context(), pagination, filters)

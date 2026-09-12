@@ -1,0 +1,194 @@
+package http
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"e-commerce-go/internal/catalog/domain"
+	"e-commerce-go/internal/shared/response"
+	"e-commerce-go/pkg/logger"
+
+	"github.com/gin-gonic/gin"
+)
+
+type categoryServiceStub struct {
+	listCalls  int
+	pagination domain.Pagination
+	filters    domain.CategoryListFilters
+}
+
+func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domain.Pagination, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
+	s.listCalls++
+	s.pagination = pagination
+	s.filters = filters
+	return []domain.Category{{ID: 1, Name: "Electronics", IsActive: true}}, 1, nil
+}
+
+func (*categoryServiceStub) GetCategoryByID(context.Context, int) (*domain.Category, error) {
+	panic("not used")
+}
+
+func (*categoryServiceStub) GetCategoryBySlug(context.Context, string) (*domain.Category, error) {
+	panic("not used")
+}
+
+func (*categoryServiceStub) CreateCategory(context.Context, *domain.Category) error {
+	panic("not used")
+}
+
+func (*categoryServiceStub) UpdateCategory(context.Context, int, *domain.Category) error {
+	panic("not used")
+}
+
+func (*categoryServiceStub) DeleteCategory(context.Context, int) error {
+	panic("not used")
+}
+
+func TestMain(m *testing.M) {
+	gin.SetMode(gin.TestMode)
+	_ = logger.Init(logger.Config{Environment: "test", Service: "catalog-http-test", Version: "test"})
+	m.Run()
+}
+
+func TestCategoryHandlerListCategoriesPassesSupportedFilters(t *testing.T) {
+	tests := []struct {
+		name       string
+		query      string
+		wantParent *int
+		wantActive *bool
+	}{
+		{name: "parent", query: "parent_id=12", wantParent: intPointer(12)},
+		{name: "active true", query: "is_active=true", wantActive: boolPointer(true)},
+		{name: "active false", query: "is_active=false", wantActive: boolPointer(false)},
+		{name: "combined", query: "parent_id=12&is_active=false", wantParent: intPointer(12), wantActive: boolPointer(false)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &categoryServiceStub{}
+			responseRecorder := performCategoryListRequest(service, tt.query)
+
+			if responseRecorder.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", responseRecorder.Code, http.StatusOK)
+			}
+			if service.listCalls != 1 {
+				t.Fatalf("service calls = %d, want 1", service.listCalls)
+			}
+			assertOptionalIntFilter(t, service.filters.ParentID, tt.wantParent)
+			assertOptionalBoolFilter(t, service.filters.IsActive, tt.wantActive)
+		})
+	}
+}
+
+func TestCategoryHandlerListCategoriesPreservesUnfilteredPagination(t *testing.T) {
+	service := &categoryServiceStub{}
+	responseRecorder := performCategoryListRequest(service, "page=2&limit=25")
+
+	if responseRecorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", responseRecorder.Code, http.StatusOK)
+	}
+	if service.filters.ParentID != nil || service.filters.IsActive != nil {
+		t.Fatalf("filters = %+v, want empty filters", service.filters)
+	}
+	wantPagination := domain.Pagination{Page: 2, Limit: 25, Offset: 25}
+	if service.pagination != wantPagination {
+		t.Errorf("pagination = %+v, want %+v", service.pagination, wantPagination)
+	}
+}
+
+func TestCategoryHandlerListCategoriesPreservesFirstRepeatedFilterValue(t *testing.T) {
+	service := &categoryServiceStub{}
+	responseRecorder := performCategoryListRequest(service, "parent_id=12&parent_id=24&is_active=false&is_active=true")
+
+	if responseRecorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", responseRecorder.Code, http.StatusOK)
+	}
+	assertOptionalIntFilter(t, service.filters.ParentID, intPointer(12))
+	assertOptionalBoolFilter(t, service.filters.IsActive, boolPointer(false))
+}
+
+func TestCategoryHandlerListCategoriesRejectsMalformedFilters(t *testing.T) {
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{name: "parent is not an integer", query: "parent_id=invalid"},
+		{name: "parent is empty", query: "parent_id="},
+		{name: "parent is zero", query: "parent_id=0"},
+		{name: "parent is negative", query: "parent_id=-1"},
+		{name: "parent overflows", query: "parent_id=999999999999999999999999999999999999"},
+		{name: "active is not a boolean", query: "is_active=invalid"},
+		{name: "active is empty", query: "is_active="},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &categoryServiceStub{}
+			responseRecorder := performCategoryListRequest(service, tt.query)
+
+			if responseRecorder.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want %d", responseRecorder.Code, http.StatusBadRequest)
+			}
+			if service.listCalls != 0 {
+				t.Fatalf("service calls = %d, want 0", service.listCalls)
+			}
+
+			var errorResponse response.ErrorResponse
+			if err := json.Unmarshal(responseRecorder.Body.Bytes(), &errorResponse); err != nil {
+				t.Fatalf("decode error response: %v", err)
+			}
+			if errorResponse.Code != "invalid_request" {
+				t.Errorf("error code = %q, want %q", errorResponse.Code, "invalid_request")
+			}
+		})
+	}
+}
+
+func performCategoryListRequest(service domain.CategoryService, query string) *httptest.ResponseRecorder {
+	handler := NewCategoryHandler(service)
+	router := gin.New()
+	router.GET("/api/v1/categories", handler.ListCategories)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/categories?"+query, nil)
+	responseRecorder := httptest.NewRecorder()
+	router.ServeHTTP(responseRecorder, request)
+	return responseRecorder
+}
+
+func assertOptionalIntFilter(t *testing.T, got, want *int) {
+	t.Helper()
+	if want == nil {
+		if got != nil {
+			t.Errorf("filter unexpectedly present with value %d", *got)
+		}
+		return
+	}
+	if got == nil {
+		t.Fatal("filter is absent")
+	}
+	if *got != *want {
+		t.Errorf("filter = %d, want %d", *got, *want)
+	}
+}
+
+func assertOptionalBoolFilter(t *testing.T, got, want *bool) {
+	t.Helper()
+	if want == nil {
+		if got != nil {
+			t.Errorf("filter unexpectedly present with value %t", *got)
+		}
+		return
+	}
+	if got == nil {
+		t.Fatal("filter is absent")
+	}
+	if *got != *want {
+		t.Errorf("filter = %t, want %t", *got, *want)
+	}
+}
+
+func intPointer(value int) *int    { return &value }
+func boolPointer(value bool) *bool { return &value }

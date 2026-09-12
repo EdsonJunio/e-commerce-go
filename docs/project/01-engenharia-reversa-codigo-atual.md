@@ -385,6 +385,12 @@ Sucesso usa o envelope compartilhado, resultando em `{"data":{"token":"..."}}`, 
 
 O DTO de update preserva a presença de `is_active`, mas essa informação se perde ao convertê-lo para `domain.Category`, cujo campo volta a ser `bool`. Também não há forma de remover um pai existente, pois `null` e campo omitido chegam como `nil`, interpretado como “não alterar”.
 
+#### ECOM-002.1 update — September 11, 2026
+
+Category listing now uses `CategoryListFilters` across the HTTP, service, and repository layers. The public `parent_id` and `is_active` filters are parsed into presence-preserving pointers, work separately or together, and apply to both the result query and its total. An explicit `is_active=false` remains distinguishable from an omitted filter. Malformed supported filter values return `400 invalid_request` before the service is called. Requests without filters retain the existing pagination behavior.
+
+The undocumented repository-only `name` filter had no consumer and was removed. Repeated filter parameters retain Gin's existing first-value behavior; defining a different repeated-parameter policy remains a future contract decision. Focused handler tests and PostgreSQL repository tests provide the executable evidence for this update.
+
 ### `ProductHandler` e seus DTOs
 
 [`internal/catalog/delivery/http/product_handler.go`](../../internal/catalog/delivery/http/product_handler.go) repete o padrão de categoria com `ProductService`.

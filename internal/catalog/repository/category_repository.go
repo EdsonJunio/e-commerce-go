@@ -28,20 +28,17 @@ func NewCategoryRepository(db *gorm.DB, cache *cache.RedisClient) domain.Categor
 	}
 }
 
-func (r *categoryRepository) List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]domain.Category, int64, error) {
+func (r *categoryRepository) List(ctx context.Context, limit, offset int, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
 	var categories []domain.Category
 	var total int64
 
 	tx := r.db.WithContext(ctx).Model(&domain.Category{})
 
-	if name, ok := filters["name"]; ok {
-		tx = tx.Where("name = ?", name)
+	if filters.IsActive != nil {
+		tx = tx.Where("is_active = ?", *filters.IsActive)
 	}
-	if active, ok := filters["is_active"]; ok {
-		tx = tx.Where("is_active = ?", active)
-	}
-	if parentID, ok := filters["parent_id"]; ok {
-		tx = tx.Where("parent_id = ?", parentID)
+	if filters.ParentID != nil {
+		tx = tx.Where("parent_id = ?", *filters.ParentID)
 	}
 
 	if err := tx.Count(&total).Error; err != nil {
