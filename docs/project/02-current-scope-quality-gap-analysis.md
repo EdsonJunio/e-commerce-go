@@ -346,7 +346,7 @@ Completion criteria:
 | Unit       | Status  | Branch | Evidence              | Updated at |
 | ---------- | ------- | ------ | --------------------- | ---------- |
 | ECOM-002.1 | done    | `fix/ecom-002-1-category-list-filters` | Handler regression matrix and focused PostgreSQL repository test; format, vet, unit, race, and build pass; lint tool unavailable and Swagger generation blocked by pre-existing annotation syntax | 2026-09-11 |
-| ECOM-002.2 | planned | —      | Depends on ECOM-002.1 | 2026-09-11 |
+| ECOM-002.2 | done | `fix/ecom-002-2-product-list-filters` | Typed filters; handler and PostgreSQL tests, vet, unit, race, build pass; pinned swag v1.16.6 generation blocked by pre-existing `@Accept JSON` in category handler (ECOM-009.1); lint tool unavailable | 2026-09-12 |
 | ECOM-002.3 | planned | —      | Depends on ECOM-002.2 | 2026-09-11 |
 | ECOM-002.4 | planned | —      | Depends on ECOM-002.3 | 2026-09-11 |
 | ECOM-002.5 | planned | —      | Depends on ECOM-002.4 | 2026-09-11 |

@@ -17,17 +17,17 @@ func NewProductRepository(db *gorm.DB) domain.ProductRepository {
 	return &productRepository{db: db}
 }
 
-func (r *productRepository) List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]domain.Product, int64, error) {
+func (r *productRepository) List(ctx context.Context, limit, offset int, filters domain.ProductListFilters) ([]domain.Product, int64, error) {
 	var products []domain.Product
 	var total int64
 
 	tx := r.db.WithContext(ctx).Model(&domain.Product{})
 
-	if catID, ok := filters["category_id"]; ok {
-		tx = tx.Where("category_id = ?", catID)
+	if filters.CategoryID != nil {
+		tx = tx.Where("category_id = ?", *filters.CategoryID)
 	}
-	if active, ok := filters["is_active"]; ok {
-		tx = tx.Where("is_active = ?", active)
+	if filters.IsActive != nil {
+		tx = tx.Where("is_active = ?", *filters.IsActive)
 	}
 
 	if err := tx.Count(&total).Error; err != nil {

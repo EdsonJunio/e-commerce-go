@@ -19,7 +19,7 @@ func NewProductService(
 	return &productService{repo: repo, cate: cate}
 }
 
-func (s *productService) ListProducts(ctx context.Context, p domain.Pagination, filters map[string]interface{}) ([]domain.Product, int64, error) {
+func (s *productService) ListProducts(ctx context.Context, p domain.Pagination, filters domain.ProductListFilters) ([]domain.Product, int64, error) {
 	return s.repo.List(ctx, p.Limit, p.Offset, filters)
 }
 
