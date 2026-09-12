@@ -1,6 +1,6 @@
 # ECOM-002.3 — Category partial updates
 
-Status: review. Approved for implementation on September 12, 2026.
+Status: done. Approved by review and integrated into `origin/main` on September 12, 2026.
 
 ## Objective and reason
 
@@ -66,4 +66,18 @@ After independent review, the service matrix was corrected to change parent ID 2
 
 Runtime behavior and the source annotation describe `parent_id: null`, but `docs/swagger.yaml`, `docs/swagger.json`, and `docs/docs.go` still show the old update description and integer-only `parent_id`. The pinned generator stops on the pre-existing `@Accept JSON` annotation before emitting artifacts. Repairing the annotation set and regenerating the full contract is ECOM-009.1. Until that unit lands, clients must use the source annotation and this note for the null-clearing behavior; the published generated OpenAPI is incomplete for this field.
 
-Independent review approved ECOM-002.3 with this non-blocking observation and accepted deferring the pre-existing generator repair to ECOM-009.1 for review purposes. Human approval of the temporary published-contract limitation was then given in the implementation conversation. The unit remains `review` pending the separately restricted stage, commit, and push steps.
+Independent review approved ECOM-002.3 with this non-blocking observation and accepted deferring the pre-existing generator repair to ECOM-009.1 for review purposes. Human approval of the temporary published-contract limitation was then given in the implementation conversation. At that pre-merge point, the unit was recorded as `review` pending the separately restricted stage, commit, and push steps.
+
+### Post-merge reconciliation — September 12, 2026
+
+The implementation was delivered in commit `cd0e8cc5c85b6550dacdb84d2f705c023b4d9d63`.
+Independent review approved the unit. Pull request #50 merged the branch into
+`main` through merge commit `8946f403e12c57ad7eb15e4aaf428f1aef3652f5`, and the
+merge is present in `origin/main`.
+
+The previously recorded validation evidence and accepted limitations remain
+unchanged. Generated OpenAPI remains incomplete for the nullable `parent_id`
+contract until ECOM-009.1. The pre-existing generator block, unavailable lint
+and security scanners, indirect hierarchy cycles, complete cache invalidation,
+and post-write read failures remain outside this reconciliation and their
+respective implementation scope.
