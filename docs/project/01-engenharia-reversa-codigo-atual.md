@@ -391,6 +391,10 @@ Category listing now uses `CategoryListFilters` across the HTTP, service, and re
 
 The undocumented repository-only `name` filter had no consumer and was removed. Repeated filter parameters retain Gin's existing first-value behavior; defining a different repeated-parameter policy remains a future contract decision. Focused handler tests and PostgreSQL repository tests provide the executable evidence for this update.
 
+#### ECOM-002.3 update — September 12, 2026
+
+Category updates now carry a `CategoryChanges` value from HTTP to the service and domain. Omitted fields leave the stored category unchanged. An explicit `is_active: false` deactivates it, while `parent_id: null` clears its parent; a positive parent ID assigns one. The handler rejects malformed or nonpositive parent IDs before calling the service. The service merges, validates, checks an assigned parent, then writes. Domain, service, and HTTP tests cover the update matrix. The original baseline observations above remain historical; indirect cycle prevention, complete cache invalidation, and post-write read errors remain separate units.
+
 ### `ProductHandler` e seus DTOs
 
 #### ECOM-002.2 update — September 12, 2026

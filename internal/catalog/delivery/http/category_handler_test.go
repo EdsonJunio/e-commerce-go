@@ -5,19 +5,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"e-commerce-go/internal/catalog/domain"
+	"e-commerce-go/internal/shared/middleware"
 	"e-commerce-go/internal/shared/response"
+	"e-commerce-go/internal/shared/service"
 	"e-commerce-go/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
 
 type categoryServiceStub struct {
-	listCalls  int
-	pagination domain.Pagination
-	filters    domain.CategoryListFilters
+	listCalls   int
+	pagination  domain.Pagination
+	filters     domain.CategoryListFilters
+	changes     domain.CategoryChanges
+	updateCalls int
 }
 
 func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domain.Pagination, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
@@ -28,7 +33,7 @@ func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domai
 }
 
 func (*categoryServiceStub) GetCategoryByID(context.Context, int) (*domain.Category, error) {
-	panic("not used")
+	return &domain.Category{ID: 1, Name: "Category", Slug: "category", Description: "Description"}, nil
 }
 
 func (*categoryServiceStub) GetCategoryBySlug(context.Context, string) (*domain.Category, error) {
@@ -39,8 +44,10 @@ func (*categoryServiceStub) CreateCategory(context.Context, *domain.Category) er
 	panic("not used")
 }
 
-func (*categoryServiceStub) UpdateCategory(context.Context, int, *domain.Category) error {
-	panic("not used")
+func (s *categoryServiceStub) UpdateCategory(_ context.Context, _ int, changes domain.CategoryChanges) error {
+	s.updateCalls++
+	s.changes = changes
+	return nil
 }
 
 func (*categoryServiceStub) DeleteCategory(context.Context, int) error {
@@ -51,6 +58,108 @@ func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
 	_ = logger.Init(logger.Config{Environment: "test", Service: "catalog-http-test", Version: "test"})
 	m.Run()
+}
+
+func TestCategoryHandlerUpdatePresence(t *testing.T) {
+	tests := []struct {
+		name  string
+		body  string
+		check func(*testing.T, domain.CategoryChanges)
+	}{
+		{"omitted fields", `{"name":"New"}`, func(t *testing.T, c domain.CategoryChanges) {
+			if c.Name == nil || *c.Name != "New" || c.IsActive != nil || c.ParentID != nil || c.ClearParent {
+				t.Fatalf("changes = %+v", c)
+			}
+		}},
+		{"explicit false", `{"is_active":false}`, func(t *testing.T, c domain.CategoryChanges) {
+			if c.IsActive == nil || *c.IsActive {
+				t.Fatalf("changes = %+v", c)
+			}
+		}},
+		{"clear parent", `{"parent_id":null}`, func(t *testing.T, c domain.CategoryChanges) {
+			if !c.ClearParent || c.ParentID != nil {
+				t.Fatalf("changes = %+v", c)
+			}
+		}},
+		{"assign parent", `{"parent_id":2}`, func(t *testing.T, c domain.CategoryChanges) {
+			if c.ClearParent || c.ParentID == nil || *c.ParentID != 2 {
+				t.Fatalf("changes = %+v", c)
+			}
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &categoryServiceStub{}
+			router := gin.New()
+			router.PUT("/api/v1/categories/:id", NewCategoryHandler(service).UpdateCategory)
+			request := httptest.NewRequest(http.MethodPut, "/api/v1/categories/1", strings.NewReader(tt.body))
+			request.Header.Set("Content-Type", "application/json")
+			result := httptest.NewRecorder()
+			router.ServeHTTP(result, request)
+			if result.Code != http.StatusOK || service.updateCalls != 1 {
+				t.Fatalf("status = %d, calls = %d, body = %s", result.Code, service.updateCalls, result.Body.String())
+			}
+			tt.check(t, service.changes)
+		})
+	}
+}
+
+func TestCategoryHandlerUpdateRejectsInvalidParent(t *testing.T) {
+	for _, body := range []string{`{"parent_id":0}`, `{"parent_id":-1}`, `{"parent_id":"2"}`, `{"parent_id":1.5}`} {
+		t.Run(body, func(t *testing.T) {
+			service := &categoryServiceStub{}
+			router := gin.New()
+			router.PUT("/api/v1/categories/:id", NewCategoryHandler(service).UpdateCategory)
+			request := httptest.NewRequest(http.MethodPut, "/api/v1/categories/1", strings.NewReader(body))
+			request.Header.Set("Content-Type", "application/json")
+			result := httptest.NewRecorder()
+			router.ServeHTTP(result, request)
+			if result.Code != http.StatusBadRequest || service.updateCalls != 0 {
+				t.Fatalf("status = %d, calls = %d", result.Code, service.updateCalls)
+			}
+		})
+	}
+}
+
+type categoryTokenValidator struct{ role string }
+
+func (*categoryTokenValidator) GenerateToken(int, string) (string, error) { return "", nil }
+func (v *categoryTokenValidator) ValidateToken(string) (*service.TokenClaims, error) {
+	return &service.TokenClaims{UserID: 1, Role: v.role}, nil
+}
+
+func TestCategoryUpdateRouteAuthorization(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		role          string
+		authorization string
+		want          int
+	}{
+		{"anonymous", "", "", http.StatusUnauthorized},
+		{"customer", "customer", "Bearer valid", http.StatusForbidden},
+		{"admin", "admin", "Bearer valid", http.StatusOK},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			catalogService := &categoryServiceStub{}
+			router := gin.New()
+			NewCategoryHandler(catalogService).RegisterCategoryRoutes(router, middleware.NewAuthMiddleware(&categoryTokenValidator{role: tt.role}))
+			request := httptest.NewRequest(http.MethodPut, "/api/v1/categories/1", strings.NewReader(`{"is_active":false}`))
+			request.Header.Set("Content-Type", "application/json")
+			request.Header.Set("Authorization", tt.authorization)
+			result := httptest.NewRecorder()
+			router.ServeHTTP(result, request)
+			if result.Code != tt.want {
+				t.Fatalf("status = %d, want %d", result.Code, tt.want)
+			}
+			wantCalls := 0
+			if tt.role == "admin" {
+				wantCalls = 1
+			}
+			if catalogService.updateCalls != wantCalls {
+				t.Fatalf("update calls = %d, want %d", catalogService.updateCalls, wantCalls)
+			}
+		})
+	}
 }
 
 func TestCategoryHandlerListCategoriesPassesSupportedFilters(t *testing.T) {
