@@ -1,25 +1,26 @@
-Siga todas as instruções do AGENTS.md do repositório.
+---
+name: review-roadmap-task
+description: Revisa independentemente uma unidade ECOM implementada, antes do commit ou em pull request, contra o escopo aprovado, testes, contratos, segurança, documentação e evidências reais. Use quando o usuário solicitar revisão, validação, auditoria do diff ou decisão sobre a conclusão de uma unidade do roadmap.
+---
 
-Leia integralmente docs/project/ai/review-policy.md antes de iniciar a revisão.
+Siga todas as instruções do `AGENTS.md` do repositório.
 
-Estabeleça o objeto da revisão
+Leia integralmente `docs/project/ai/review-policy.md` antes de iniciar a revisão.
+
+## Estabeleça o objeto da revisão
 
 Identifique:
 
-a unidade ECOM-_._;
-
-o modo pre-commit ou pull-request;
-
-a branch, worktree, commit ou pull request revisado;
-
-a versão aprovada da implementation note;
-
-as ações autorizadas pelo pedido atual.
+- a unidade `ECOM-*.*`;
+- o modo `pre-commit` ou `pull-request`;
+- a branch, worktree, commit ou pull request revisado;
+- a versão aprovada da implementation note;
+- as ações autorizadas pelo pedido atual.
 
 Se o objeto não puder ser determinado sem risco de revisar o estado errado, pare
 e peça esclarecimento.
 
-Preserve a independência
+## Preserve a independência
 
 Reconstrua o contrato pelas fontes primárias do repositório. O relatório do
 implementador é contexto auxiliar, não evidência.
@@ -28,40 +29,32 @@ Comece em modo somente leitura. Não modifique arquivos, aplique correções, fa
 stage, commit, push, comentário remoto, aprovação de pull request ou merge sem
 autorização explícita posterior.
 
-Revise
+## Revise
 
 Compare a unidade e sua implementation note com:
 
-o diff completo, incluindo arquivos não rastreados quando o modo for
-pre-commit;
-
-todos os consumidores dos contratos alterados;
-
-testes e evidência de regressão;
-
-contratos públicos, migrations e comportamento persistente afetado;
-
-documentação do comportamento atual e execution status;
-
-resultados reais dos gates aplicáveis.
+- o diff completo, incluindo arquivos não rastreados quando o modo for
+  `pre-commit`;
+- todos os consumidores dos contratos alterados;
+- testes e evidência de regressão;
+- contratos públicos, migrations e comportamento persistente afetado;
+- documentação do comportamento atual e execution status;
+- resultados reais dos gates aplicáveis.
 
 Use os critérios, classificações e formato de relatório definidos em
-docs/project/ai/review-policy.md.
+`docs/project/ai/review-policy.md`.
 
 Não invente achados. Não aceite afirmações sem evidência. Não trate um gate
 ignorado, indisponível ou não executado como aprovado.
 
-Conclua
+## Conclua
 
 Retorne exatamente um veredito:
 
-approved;
-
-approved with non-blocking observations;
-
-changes required;
-
-blocked by missing evidence.
+- `approved`;
+- `approved with non-blocking observations`;
+- `changes required`;
+- `blocked by missing evidence`.
 
 Apresente os achados antes do resumo. Confirme o estado final do worktree e diga
 se houve qualquer ação de escrita. Aprovação de revisão não autoriza commit,
