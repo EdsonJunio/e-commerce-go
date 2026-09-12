@@ -100,7 +100,7 @@ func (mr *MockProductRepositoryMockRecorder) FindBySlug(ctx, slug any) *gomock.C
 }
 
 // List mocks base method.
-func (m *MockProductRepository) List(ctx context.Context, limit, offset int, filters map[string]any) ([]domain.Product, int64, error) {
+func (m *MockProductRepository) List(ctx context.Context, limit, offset int, filters domain.ProductListFilters) ([]domain.Product, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, limit, offset, filters)
 	ret0, _ := ret[0].([]domain.Product)
@@ -212,7 +212,7 @@ func (mr *MockProductServiceMockRecorder) GetProductBySlug(ctx, slug any) *gomoc
 }
 
 // ListProducts mocks base method.
-func (m *MockProductService) ListProducts(ctx context.Context, p domain.Pagination, filters map[string]any) ([]domain.Product, int64, error) {
+func (m *MockProductService) ListProducts(ctx context.Context, p domain.Pagination, filters domain.ProductListFilters) ([]domain.Product, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProducts", ctx, p, filters)
 	ret0, _ := ret[0].([]domain.Product)

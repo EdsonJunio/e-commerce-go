@@ -74,6 +74,7 @@ func (h *ProductHandler) RegisterProductRoutes(router *gin.Engine, auth *middlew
 // @Param        category_id  query     int     false  "Filter by Category ID"
 // @Param        is_active    query     bool    false  "Filter by Status"
 // @Success      200          {object}  response.PaginatedResponse
+// @Failure      400          {object}  response.ErrorResponse
 // @Failure      500          {object}  response.ErrorResponse
 // @Router       /products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
@@ -82,16 +83,23 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	pagination := domain.NewPagination(page, limit)
 
-	filters := make(map[string]interface{})
-	if categoryID := c.Query("category_id"); categoryID != "" {
-		if catID, err := strconv.Atoi(categoryID); err == nil {
-			filters["category_id = ?"] = catID
+	filters := domain.ProductListFilters{}
+	query := c.Request.URL.Query()
+	if _, present := query["category_id"]; present {
+		catID, err := strconv.Atoi(query.Get("category_id"))
+		if err != nil || catID <= 0 {
+			response.Error(c, http.StatusBadRequest, "invalid_request", "category_id must be a positive integer")
+			return
 		}
+		filters.CategoryID = &catID
 	}
-	if isActive := c.Query("is_active"); isActive != "" {
-		if active, err := strconv.ParseBool(isActive); err == nil {
-			filters["is_active = ?"] = active
+	if _, present := query["is_active"]; present {
+		active, err := strconv.ParseBool(query.Get("is_active"))
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, "invalid_request", "is_active must be a boolean")
+			return
 		}
+		filters.IsActive = &active
 	}
 
 	products, total, err := h.service.ListProducts(c.Request.Context(), pagination, filters)

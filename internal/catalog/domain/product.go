@@ -81,8 +81,13 @@ func (p *Product) UpdateState(newData *Product) {
 	p.IsActive = newData.IsActive
 }
 
+type ProductListFilters struct {
+	CategoryID *int
+	IsActive   *bool
+}
+
 type ProductRepository interface {
-	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]Product, int64, error)
+	List(ctx context.Context, limit, offset int, filters ProductListFilters) ([]Product, int64, error)
 	FindByID(ctx context.Context, id int) (*Product, error)
 	FindBySlug(ctx context.Context, slug string) (*Product, error)
 	Create(ctx context.Context, product *Product) error
@@ -91,7 +96,7 @@ type ProductRepository interface {
 }
 
 type ProductService interface {
-	ListProducts(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Product, int64, error)
+	ListProducts(ctx context.Context, p Pagination, filters ProductListFilters) ([]Product, int64, error)
 	GetProductByID(ctx context.Context, id int) (*Product, error)
 	GetProductBySlug(ctx context.Context, slug string) (*Product, error)
 	CreateProduct(ctx context.Context, product *Product) error

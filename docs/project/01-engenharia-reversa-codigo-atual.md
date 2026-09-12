@@ -240,7 +240,7 @@ Como a validação de categoria passa pelo repositório com cache, a criação o
 
 Definido em [`internal/catalog/repository/product_repository.go`](../../internal/catalog/repository/product_repository.go), usa apenas GORM/PostgreSQL.
 
-- `List` deveria filtrar por `category_id` e `is_active`, depois contar, ordenar e paginar.
+- Na análise de 2026-09-10, `List` tinha os predicados de `category_id` e `is_active`, mas não recebia as chaves produzidas pelo handler. Após ECOM-002.2, os filtros tipados são aplicados antes da contagem e da paginação.
 - `FindByID` e `FindBySlug` convertem `gorm.ErrRecordNotFound` em `ErrProductNotFound`.
 - `Create` e `Update` convertem violação única em `ErrProductSlugExists`.
 - `Delete` faz soft delete e valida `RowsAffected`.
@@ -393,6 +393,10 @@ The undocumented repository-only `name` filter had no consumer and was removed. 
 
 ### `ProductHandler` e seus DTOs
 
+#### ECOM-002.2 update — September 12, 2026
+
+Product listing now passes `ProductListFilters` through HTTP, service, and repository. The documented `category_id` and `is_active` filters apply to rows and total, separately or together, including `is_active=false`. A present invalid filter returns `400 invalid_request` without calling the service. Omitted filters retain pagination behavior, and repeated filter parameters use Gin's first value. Handler regression tests and focused PostgreSQL repository tests cover this behavior.
+
 [`internal/catalog/delivery/http/product_handler.go`](../../internal/catalog/delivery/http/product_handler.go) repete o padrão de categoria com `ProductService`.
 
 - `CreateProductRequest` exige categoria, conteúdo, SEO e `is_active`;
@@ -406,11 +410,11 @@ The undocumented repository-only `name` filter had no consumer and was removed. 
 
 [`internal/catalog/delivery/http/sku_handler.go`](../../internal/catalog/delivery/http/sku_handler.go) injeta `ProductSkuService`, registra somente `GET /api/v1/skus` e lista com paginação. Recebe `auth`, mas não o usa. A rota é pública e não possui anotações Swaggo.
 
-### Problema comum dos filtros
+### Problema dos filtros na análise de 2026-09-10
 
-Os handlers inserem chaves como `"category_id = ?"`, `"parent_id = ?"` e `"is_active = ?"`. Os repositórios procuram `"category_id"`, `"parent_id"` e `"is_active"`. Como as chaves não coincidem, os filtros HTTP válidos são silenciosamente ignorados. O mesmo ocorre com `sku_id`.
+No commit-base analisado, os handlers inseriam chaves como `"category_id = ?"`, `"parent_id = ?"` e `"is_active = ?"`. Os repositórios procuravam `"category_id"`, `"parent_id"` e `"is_active"`; por isso, os filtros HTTP válidos eram silenciosamente ignorados. ECOM-002.1 corrigiu a listagem de categorias e ECOM-002.2 corrigiu a listagem de produtos. A divergência de `sku_id` permanece na listagem de SKUs.
 
-Parâmetro de filtro inválido também é ignorado, em vez de produzir 400. Página e limite inválidos são normalizados por `NewPagination`.
+Na análise original, parâmetros de filtro inválidos também eram ignorados, em vez de produzir 400. Os filtros suportados de categorias e produtos agora retornam `400 invalid_request` quando inválidos; essa correção ainda não abrange SKUs. Página e limite inválidos continuam normalizados por `NewPagination`.
 
 ## 11. Middlewares e transporte compartilhado
 
