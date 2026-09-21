@@ -1,6 +1,6 @@
 # ECOM-002.4 — Product partial updates
 
-Status: done after independent review approval on September 21, 2026. Branch: `fix/ecom-002-4-product-partial-update`. Local commit pending push and integration.
+Status: done after independent review approval on September 21, 2026. Branch: `fix/ecom-002-4-product-partial-update`. Commit `a8c4f83b99bc086a1edf7347981fe822c0261f99` was pushed and merged by PR #52 in merge commit `7addec68070751448824113253502249e91c175c`.
 
 ## Objective and reason
 
