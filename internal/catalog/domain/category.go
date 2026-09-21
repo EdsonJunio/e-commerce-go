@@ -78,6 +78,7 @@ func (c *Category) UpdateState(changes CategoryChanges) {
 type CategoryRepository interface {
 	List(ctx context.Context, limit, offset int, filters CategoryListFilters) ([]Category, int64, error)
 	FindByID(ctx context.Context, id int) (*Category, error)
+	FindParentByID(ctx context.Context, id int) (*int, error)
 	FindBySlug(ctx context.Context, slug string) (*Category, error)
 	Create(ctx context.Context, category *Category) error
 	Update(ctx context.Context, category *Category) error

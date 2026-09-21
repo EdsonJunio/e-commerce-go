@@ -295,7 +295,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 // UpdateCategory godoc
 // @Summary      Update a category
-// @Description  Update only supplied fields. Omitted fields are unchanged; parent_id null clears the parent and is_active false deactivates the category.
+// @Description  Update only supplied fields. Omitted fields are unchanged; parent_id null clears the parent, cyclic parent assignments are rejected, and is_active false deactivates the category.
 // @Tags         categories
 // @Accept       JSON
 // @Produce      JSON

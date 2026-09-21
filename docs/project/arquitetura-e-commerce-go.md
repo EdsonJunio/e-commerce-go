@@ -276,6 +276,8 @@ Current implementation update (ECOM-002.3, September 12, 2026): the existing cat
 
 Current implementation update (ECOM-002.4, September 21, 2026): the existing product update route preserves omitted fields and accepts `is_active: false`. A supplied category ID is validated as an existing category; the current domain still requires a category and does not support clearing it. This records tested application behavior, not a change to the target schema.
 
+Current implementation update (ECOM-002.5, September 21, 2026): category updates reject direct and indirect parent cycles. The service walks ancestors using uncached PostgreSQL parent lookups for the domain decision; the repository rechecks the current chain in a serialized transaction before saving. This protects writes through the application repository, while the target database-level cycle constraint remains unimplemented for direct SQL writers.
+
 Tabelas técnicas: `idempotency_keys`, `outbox_events`, `inbox_messages`, `audit_events`. Tokens de sessão/refresh, se utilizados, exigem tabela com hash, expiração, revogação e rotação; não guardar token bruto.
 
 ```mermaid

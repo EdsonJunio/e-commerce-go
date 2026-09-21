@@ -172,6 +172,10 @@ Definida em [`internal/catalog/service/category_service.go`](../../internal/cata
 
 O serviço impede `ParentID == ID`, mas não detecta ciclos indiretos, como A ser filha de B enquanto B já é filha de A. Em `GetCategoryBySlug`, slug vazio retorna `ErrCategoryDescriptionRequired`, embora o erro semanticamente correto fosse o de slug.
 
+#### ECOM-002.5 update — September 21, 2026
+
+The baseline statement above describes the earlier code. Category updates now walk the proposed parent's ancestor chain through an uncached PostgreSQL parent lookup and reject direct or indirect cycles with `ErrInvalidCategoryReference`. A repeated ancestor or missing ancestor also prevents a write. The repository repeats the cycle check against PostgreSQL inside a transaction while serializing parent assignments with a transaction-scoped advisory lock, so concurrent API updates cannot each accept the other's old hierarchy. Explicit parent clearing remains supported. This guard applies to the application update path; direct SQL changes outside the API are not protected by a database constraint.
+
 ### `categoryRepository`
 
 Definido em [`internal/catalog/repository/category_repository.go`](../../internal/catalog/repository/category_repository.go), mantém `*gorm.DB` e `*cache.RedisClient`.

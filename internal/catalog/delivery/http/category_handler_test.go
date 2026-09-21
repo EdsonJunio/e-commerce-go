@@ -23,6 +23,7 @@ type categoryServiceStub struct {
 	filters     domain.CategoryListFilters
 	changes     domain.CategoryChanges
 	updateCalls int
+	updateErr   error
 }
 
 func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domain.Pagination, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
@@ -47,7 +48,23 @@ func (*categoryServiceStub) CreateCategory(context.Context, *domain.Category) er
 func (s *categoryServiceStub) UpdateCategory(_ context.Context, _ int, changes domain.CategoryChanges) error {
 	s.updateCalls++
 	s.changes = changes
-	return nil
+	return s.updateErr
+}
+
+func TestCategoryHandlerUpdateRejectsHierarchyCycle(t *testing.T) {
+	service := &categoryServiceStub{updateErr: domain.ErrInvalidCategoryReference}
+	router := gin.New()
+	router.PUT("/api/v1/categories/:id", NewCategoryHandler(service).UpdateCategory)
+	request := httptest.NewRequest(http.MethodPut, "/api/v1/categories/1", strings.NewReader(`{"parent_id":3}`))
+	request.Header.Set("Content-Type", "application/json")
+	result := httptest.NewRecorder()
+	router.ServeHTTP(result, request)
+	if result.Code != http.StatusBadRequest || service.updateCalls != 1 {
+		t.Fatalf("status = %d, calls = %d, body = %s", result.Code, service.updateCalls, result.Body.String())
+	}
+	if !strings.Contains(result.Body.String(), `"code":"invalid_request"`) {
+		t.Fatalf("unexpected error code: %s", result.Body.String())
+	}
 }
 
 func (*categoryServiceStub) DeleteCategory(context.Context, int) error {
