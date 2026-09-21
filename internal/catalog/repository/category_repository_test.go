@@ -2,15 +2,146 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"e-commerce-go/internal/catalog/domain"
+	"e-commerce-go/internal/shared/cache"
 
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+func TestCategoryRepositoryUpdateRejectsCycles(t *testing.T) {
+	db := categoryTestDatabase(t)
+	redisServer := miniredis.RunT(t)
+	redisClient := redis.NewClient(&redis.Options{Addr: redisServer.Addr()})
+	t.Cleanup(func() { _ = redisClient.Close() })
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		t.Fatalf("begin transaction: %v", tx.Error)
+	}
+	defer tx.Rollback()
+	root := domain.Category{Name: "Cycle root", Slug: uniqueCategorySlug("cycle-root"), Description: "Root", IsActive: true}
+	child := domain.Category{Name: "Cycle child", Slug: uniqueCategorySlug("cycle-child"), Description: "Child", IsActive: true}
+	grandchild := domain.Category{Name: "Cycle grandchild", Slug: uniqueCategorySlug("cycle-grandchild"), Description: "Grandchild", IsActive: true}
+	for _, category := range []*domain.Category{&root, &child, &grandchild} {
+		if err := tx.Create(category).Error; err != nil {
+			t.Fatalf("insert category: %v", err)
+		}
+	}
+	repository := NewCategoryRepository(tx, &cache.RedisClient{Client: redisClient})
+	child.ParentID = &root.ID
+	grandchild.ParentID = &child.ID
+	for _, category := range []*domain.Category{&child, &grandchild} {
+		if err := repository.Update(context.Background(), category); err != nil {
+			t.Fatalf("assign valid parent: %v", err)
+		}
+	}
+
+	root.ParentID = &grandchild.ID
+	if err := repository.Update(context.Background(), &root); !errors.Is(err, domain.ErrInvalidCategoryReference) {
+		t.Fatalf("indirect cycle error = %v", err)
+	}
+	root.ParentID = &root.ID
+	if err := repository.Update(context.Background(), &root); !errors.Is(err, domain.ErrInvalidCategoryReference) {
+		t.Fatalf("direct cycle error = %v", err)
+	}
+	var storedRoot domain.Category
+	if err := tx.First(&storedRoot, root.ID).Error; err != nil || storedRoot.ParentID != nil {
+		t.Fatalf("root after rejected updates = %+v, error = %v", storedRoot, err)
+	}
+	grandchild.ParentID = nil
+	if err := repository.Update(context.Background(), &grandchild); err != nil {
+		t.Fatalf("clear parent: %v", err)
+	}
+	var storedGrandchild domain.Category
+	if err := tx.First(&storedGrandchild, grandchild.ID).Error; err != nil || storedGrandchild.ParentID != nil {
+		t.Fatalf("grandchild after clear = %+v, error = %v", storedGrandchild, err)
+	}
+	staleKey := fmt.Sprintf("category:id:%d", grandchild.ID)
+	if err := redisClient.Set(context.Background(), staleKey, fmt.Sprintf(`{"parent_id":%d}`, child.ID), 0).Err(); err != nil {
+		t.Fatalf("seed stale cache entry: %v", err)
+	}
+	parentID, err := repository.FindParentByID(context.Background(), grandchild.ID)
+	if err != nil || parentID != nil {
+		t.Fatalf("authoritative parent after clear = %v, error = %v", parentID, err)
+	}
+}
+
+func TestCategoryRepositoryConcurrentParentUpdatesDoNotCycle(t *testing.T) {
+	db := categoryTestDatabase(t)
+	redisServer := miniredis.RunT(t)
+	redisClient := redis.NewClient(&redis.Options{Addr: redisServer.Addr()})
+	t.Cleanup(func() { _ = redisClient.Close() })
+	first := domain.Category{Name: "Concurrent first", Slug: uniqueCategorySlug("concurrent-first"), Description: "First", IsActive: true}
+	second := domain.Category{Name: "Concurrent second", Slug: uniqueCategorySlug("concurrent-second"), Description: "Second", IsActive: true}
+	for _, category := range []*domain.Category{&first, &second} {
+		if err := db.Create(category).Error; err != nil {
+			t.Fatalf("insert category: %v", err)
+		}
+	}
+	t.Cleanup(func() {
+		if err := db.Model(&domain.Category{}).Where("id IN ?", []int{first.ID, second.ID}).Update("deleted_at", time.Now()).Error; err != nil {
+			t.Errorf("hide concurrent test categories: %v", err)
+		}
+	})
+	repository := NewCategoryRepository(db, &cache.RedisClient{Client: redisClient})
+	first.ParentID = &second.ID
+	second.ParentID = &first.ID
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	var workers sync.WaitGroup
+	for _, category := range []*domain.Category{&first, &second} {
+		workers.Add(1)
+		go func(category *domain.Category) {
+			defer workers.Done()
+			<-start
+			results <- repository.Update(context.Background(), category)
+		}(category)
+	}
+	close(start)
+	workers.Wait()
+	close(results)
+	successes, rejected := 0, 0
+	for err := range results {
+		switch {
+		case err == nil:
+			successes++
+		case errors.Is(err, domain.ErrInvalidCategoryReference):
+			rejected++
+		default:
+			t.Fatalf("unexpected update error: %v", err)
+		}
+	}
+	if successes != 1 || rejected != 1 {
+		t.Fatalf("successes = %d, rejected = %d", successes, rejected)
+	}
+}
+
+func categoryTestDatabase(t *testing.T) *gorm.DB {
+	t.Helper()
+	databaseURL := os.Getenv("CATEGORY_REPOSITORY_TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("CATEGORY_REPOSITORY_TEST_DATABASE_URL is required for the PostgreSQL repository test")
+	}
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open PostgreSQL test database: %v", err)
+	}
+	return db
+}
+
+func uniqueCategorySlug(prefix string) string {
+	return prefix + "-" + time.Now().UTC().Format("20060102150405.000000000")
+}
 
 func TestCategoryRepositoryListFiltersTotalAndPagination(t *testing.T) {
 	databaseURL := os.Getenv("CATEGORY_REPOSITORY_TEST_DATABASE_URL")

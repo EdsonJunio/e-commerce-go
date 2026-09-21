@@ -75,12 +75,38 @@ func (s *categoryService) UpdateCategory(ctx context.Context, id int, changes do
 		if *changes.ParentID <= 0 || *changes.ParentID == id {
 			return domain.ErrInvalidCategoryReference
 		}
-		if err := s.ensureParentExists(ctx, *changes.ParentID); err != nil {
+		if err := s.ensureParentDoesNotCycle(ctx, id, *changes.ParentID); err != nil {
 			return err
 		}
 	}
 
 	return s.repo.Update(ctx, existing)
+}
+
+func (s *categoryService) ensureParentDoesNotCycle(ctx context.Context, categoryID, parentID int) error {
+	visited := make(map[int]struct{})
+	for parentID != 0 {
+		if parentID == categoryID {
+			return domain.ErrInvalidCategoryReference
+		}
+		if _, seen := visited[parentID]; seen {
+			return domain.ErrInvalidCategoryReference
+		}
+		visited[parentID] = struct{}{}
+
+		nextParentID, err := s.repo.FindParentByID(ctx, parentID)
+		if errors.Is(err, domain.ErrCategoryNotFound) {
+			return domain.ErrParentCategoryNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if nextParentID == nil {
+			return nil
+		}
+		parentID = *nextParentID
+	}
+	return domain.ErrInvalidCategoryReference
 }
 
 func (s *categoryService) DeleteCategory(ctx context.Context, id int) error {

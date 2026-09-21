@@ -13,13 +13,22 @@ type updateCategoryRepository struct {
 	updated   bool
 	updateErr error
 	parent    *domain.Category
+	ancestors map[int]domain.Category
+	lookupErr error
 }
 
 func (*updateCategoryRepository) List(context.Context, int, int, domain.CategoryListFilters) ([]domain.Category, int64, error) {
 	panic("not used")
 }
 func (r *updateCategoryRepository) FindByID(_ context.Context, id int) (*domain.Category, error) {
+	if r.lookupErr != nil && id != r.category.ID {
+		return nil, r.lookupErr
+	}
 	if id != r.category.ID {
+		if ancestor, ok := r.ancestors[id]; ok {
+			copy := ancestor
+			return &copy, nil
+		}
 		if r.parent != nil && id == r.parent.ID {
 			copy := *r.parent
 			return &copy, nil
@@ -28,6 +37,63 @@ func (r *updateCategoryRepository) FindByID(_ context.Context, id int) (*domain.
 	}
 	copy := r.category
 	return &copy, nil
+}
+func (r *updateCategoryRepository) FindParentByID(ctx context.Context, id int) (*int, error) {
+	category, err := r.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if category == nil {
+		return nil, domain.ErrParentCategoryNotFound
+	}
+	return category.ParentID, nil
+}
+
+func TestUpdateCategoryRejectsIndirectCycle(t *testing.T) {
+	rootID, childID, grandchildID := 1, 2, 3
+	repo := &updateCategoryRepository{
+		category: domain.Category{ID: rootID, Name: "Root", Slug: "root", Description: "Root"},
+		ancestors: map[int]domain.Category{
+			childID:      {ID: childID, ParentID: &rootID},
+			grandchildID: {ID: grandchildID, ParentID: &childID},
+		},
+	}
+	err := NewCategoryService(repo).UpdateCategory(context.Background(), rootID, domain.CategoryChanges{ParentID: &grandchildID})
+	if !errors.Is(err, domain.ErrInvalidCategoryReference) {
+		t.Fatalf("cycle error = %v, want invalid category reference", err)
+	}
+	if repo.updated {
+		t.Fatal("cycle was persisted")
+	}
+}
+
+func TestUpdateCategoryAncestorChain(t *testing.T) {
+	rootID, childID, grandchildID, otherID := 1, 2, 3, 4
+	readFailure := errors.New("ancestor read failed")
+	tests := []struct {
+		name      string
+		parentID  int
+		ancestors map[int]domain.Category
+		lookupErr error
+		wantErr   error
+		wantWrite bool
+	}{
+		{"direct self-parent", rootID, nil, nil, domain.ErrInvalidCategoryReference, false},
+		{"three-level cycle", grandchildID, map[int]domain.Category{grandchildID: {ID: grandchildID, ParentID: &childID}, childID: {ID: childID, ParentID: &rootID}}, nil, domain.ErrInvalidCategoryReference, false},
+		{"valid chain", grandchildID, map[int]domain.Category{grandchildID: {ID: grandchildID, ParentID: &childID}, childID: {ID: childID, ParentID: &otherID}, otherID: {ID: otherID}}, nil, nil, true},
+		{"missing ancestor", grandchildID, map[int]domain.Category{grandchildID: {ID: grandchildID, ParentID: &childID}}, nil, domain.ErrParentCategoryNotFound, false},
+		{"lookup failure", grandchildID, nil, readFailure, readFailure, false},
+		{"preexisting parent cycle", grandchildID, map[int]domain.Category{grandchildID: {ID: grandchildID, ParentID: &childID}, childID: {ID: childID, ParentID: &grandchildID}}, nil, domain.ErrInvalidCategoryReference, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &updateCategoryRepository{category: domain.Category{ID: rootID, Name: "Root", Slug: "root", Description: "Root"}, ancestors: tt.ancestors, lookupErr: tt.lookupErr}
+			err := NewCategoryService(repo).UpdateCategory(context.Background(), rootID, domain.CategoryChanges{ParentID: &tt.parentID})
+			if !errors.Is(err, tt.wantErr) || repo.updated != tt.wantWrite {
+				t.Fatalf("error = %v, updated = %t; want %v, %t", err, repo.updated, tt.wantErr, tt.wantWrite)
+			}
+		})
+	}
 }
 func (*updateCategoryRepository) FindBySlug(context.Context, string) (*domain.Category, error) {
 	panic("not used")
