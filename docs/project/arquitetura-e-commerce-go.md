@@ -274,6 +274,8 @@ Campos monetários são BIGINT não negativos quando representarem montantes, `c
 
 Current implementation update (ECOM-002.3, September 12, 2026): the existing category update route preserves omitted fields, accepts `is_active: false`, and treats `parent_id: null` as removal of the optional relationship. This describes current behavior; cycle prevention in the table remains a target for ECOM-002.5.
 
+Current implementation update (ECOM-002.4, September 21, 2026): the existing product update route preserves omitted fields and accepts `is_active: false`. A supplied category ID is validated as an existing category; the current domain still requires a category and does not support clearing it. This records tested application behavior, not a change to the target schema.
+
 Tabelas técnicas: `idempotency_keys`, `outbox_events`, `inbox_messages`, `audit_events`. Tokens de sessão/refresh, se utilizados, exigem tabela com hash, expiração, revogação e rotação; não guardar token bruto.
 
 ```mermaid

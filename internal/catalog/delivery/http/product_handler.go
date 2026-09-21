@@ -307,7 +307,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 
 // UpdateProduct godoc
 // @Summary      Update a product
-// @Description  Update specific fields of a product by ID
+// @Description  Update only supplied fields of a product by ID. Omitted fields are unchanged; is_active false deactivates the product.
 // @Tags         products
 // @Accept       JSON
 // @Produce      JSON
@@ -349,27 +349,14 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	changes := &domain.Product{}
-	if req.CategoryID != nil {
-		changes.CategoryID = req.CategoryID
-	}
-	if req.Name != nil {
-		changes.Name = *req.Name
-	}
-	if req.Slug != nil {
-		changes.Slug = *req.Slug
-	}
-	if req.Description != nil {
-		changes.Description = *req.Description
-	}
-	if req.SeoTitle != nil {
-		changes.SeoTitle = *req.SeoTitle
-	}
-	if req.SeoDescription != nil {
-		changes.SeoDescription = *req.SeoDescription
-	}
-	if req.IsActive != nil {
-		changes.IsActive = *req.IsActive
+	changes := domain.ProductChanges{
+		CategoryID:     req.CategoryID,
+		Name:           req.Name,
+		Slug:           req.Slug,
+		Description:    req.Description,
+		SeoTitle:       req.SeoTitle,
+		SeoDescription: req.SeoDescription,
+		IsActive:       req.IsActive,
 	}
 
 	if err := h.service.UpdateProduct(c.Request.Context(), id, changes); err != nil {

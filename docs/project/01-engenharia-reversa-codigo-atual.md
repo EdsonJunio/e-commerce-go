@@ -401,6 +401,10 @@ Category updates now carry a `CategoryChanges` value from HTTP to the service an
 
 Product listing now passes `ProductListFilters` through HTTP, service, and repository. The documented `category_id` and `is_active` filters apply to rows and total, separately or together, including `is_active=false`. A present invalid filter returns `400 invalid_request` without calling the service. Omitted filters retain pagination behavior, and repeated filter parameters use Gin's first value. Handler regression tests and focused PostgreSQL repository tests cover this behavior.
 
+#### ECOM-002.4 update — September 21, 2026
+
+Product updates now carry `ProductChanges` from HTTP to service and domain. Omitted fields preserve stored values, while explicit `is_active: false` deactivates the product. Present text fields are trimmed and validated after merging. A present category ID must be positive and resolve to an existing category before the product is written. `category_id: null` does not clear the required relationship. Domain, service, and HTTP tests cover field presence, invalid input, errors, and authorization. The baseline `UpdateState` and handler observations above remain historical; inactive product creation and post-write read failure handling remain separate work.
+
 [`internal/catalog/delivery/http/product_handler.go`](../../internal/catalog/delivery/http/product_handler.go) repete o padrão de categoria com `ProductService`.
 
 - `CreateProductRequest` exige categoria, conteúdo, SEO e `is_active`;

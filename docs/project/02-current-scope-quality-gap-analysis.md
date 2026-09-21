@@ -348,7 +348,7 @@ Completion criteria:
 | ECOM-002.1 | done    | `fix/ecom-002-1-category-list-filters` | Handler regression matrix and focused PostgreSQL repository test; format, vet, unit, race, and build pass; lint tool unavailable and Swagger generation blocked by pre-existing annotation syntax | 2026-09-11 |
 | ECOM-002.2 | done | `fix/ecom-002-2-product-list-filters` | Typed filters; handler and PostgreSQL tests, vet, unit, race, build pass; pinned swag v1.16.6 generation blocked by pre-existing `@Accept JSON` in category handler (ECOM-009.1); lint tool unavailable | 2026-09-12 |
 | ECOM-002.3 | done | `fix/ecom-002-3-category-partial-update` | Implemented in commit `cd0e8cc5c85b6550dacdb84d2f705c023b4d9d63`; approved by review; merged by PR #50 in merge commit `8946f403e12c57ad7eb15e4aaf428f1aef3652f5`; domain, service, HTTP, format, vet, unit, race, and build evidence recorded in the implementation note; OpenAPI and unavailable-tool limitations remain documented | 2026-09-12 |
-| ECOM-002.4 | planned | —      | Depends on ECOM-002.3 | 2026-09-11 |
+| ECOM-002.4 | done | `fix/ecom-002-4-product-partial-update` | Independent review approved with no findings; pre-correction failure and domain/service/HTTP tests; format, vet, unit, race, build pass. PostgreSQL integration and OpenAPI remain blocked; lint/security tools unavailable. Local commit pending push and integration. | 2026-09-21 |
 | ECOM-002.5 | planned | —      | Depends on ECOM-002.4 | 2026-09-11 |
 | ECOM-002.6 | planned | —      | Depends on ECOM-002.5 | 2026-09-11 |
 

@@ -228,15 +228,15 @@ func (mr *MockProductServiceMockRecorder) ListProducts(ctx, p, filters any) *gom
 }
 
 // UpdateProduct mocks base method.
-func (m *MockProductService) UpdateProduct(ctx context.Context, id int, product *domain.Product) error {
+func (m *MockProductService) UpdateProduct(ctx context.Context, id int, changes domain.ProductChanges) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProduct", ctx, id, product)
+	ret := m.ctrl.Call(m, "UpdateProduct", ctx, id, changes)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateProduct indicates an expected call of UpdateProduct.
-func (mr *MockProductServiceMockRecorder) UpdateProduct(ctx, id, product any) *gomock.Call {
+func (mr *MockProductServiceMockRecorder) UpdateProduct(ctx, id, changes any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProduct", reflect.TypeOf((*MockProductService)(nil).UpdateProduct), ctx, id, product)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProduct", reflect.TypeOf((*MockProductService)(nil).UpdateProduct), ctx, id, changes)
 }
