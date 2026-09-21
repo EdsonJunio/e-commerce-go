@@ -55,20 +55,20 @@ func (s *productService) CreateProduct(ctx context.Context, product *domain.Prod
 	return s.repo.Create(ctx, product)
 }
 
-func (s *productService) UpdateProduct(ctx context.Context, id int, req *domain.Product) error {
+func (s *productService) UpdateProduct(ctx context.Context, id int, changes domain.ProductChanges) error {
 	existing, err := s.findProductOrFail(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	existing.UpdateState(req)
+	existing.UpdateState(changes)
 
 	if err := existing.Validate(); err != nil {
 		return err
 	}
 
-	if req.CategoryID != nil {
-		if err := s.ensureCategoryExists(ctx, *req.CategoryID); err != nil {
+	if changes.CategoryID != nil {
+		if err := s.ensureCategoryExists(ctx, *changes.CategoryID); err != nil {
 			return err
 		}
 	}
@@ -101,13 +101,16 @@ func (s *productService) findProductOrFail(ctx context.Context, id int) (*domain
 }
 
 func (s *productService) ensureCategoryExists(ctx context.Context, categoryID int) error {
-	_, err := s.cate.FindByID(ctx, categoryID)
+	category, err := s.cate.FindByID(ctx, categoryID)
 
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryNotFound) {
 			return domain.ErrInvalidCategoryReference
 		}
 		return err
+	}
+	if category == nil {
+		return domain.ErrInvalidCategoryReference
 	}
 
 	return nil

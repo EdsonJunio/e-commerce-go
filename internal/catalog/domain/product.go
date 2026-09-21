@@ -23,6 +23,16 @@ type Product struct {
 	DeletedReason  string         `gorm:"column:deleted_reason" json:"deleted_reason"`
 }
 
+type ProductChanges struct {
+	Name           *string
+	Slug           *string
+	Description    *string
+	SeoTitle       *string
+	SeoDescription *string
+	CategoryID     *int
+	IsActive       *bool
+}
+
 func (Product) TableName() string {
 	return "products"
 }
@@ -57,28 +67,28 @@ func (p *Product) Validate() error {
 	return nil
 }
 
-func (p *Product) UpdateState(newData *Product) {
-	if newData.Name != "" {
-		p.Name = strings.TrimSpace(newData.Name)
+func (p *Product) UpdateState(changes ProductChanges) {
+	if changes.Name != nil {
+		p.Name = strings.TrimSpace(*changes.Name)
 	}
-	if newData.Slug != "" {
-		p.Slug = strings.TrimSpace(newData.Slug)
+	if changes.Slug != nil {
+		p.Slug = strings.TrimSpace(*changes.Slug)
 	}
-	if newData.Description != "" {
-		p.Description = strings.TrimSpace(newData.Description)
+	if changes.Description != nil {
+		p.Description = strings.TrimSpace(*changes.Description)
 	}
-	if newData.SeoTitle != "" {
-		p.SeoTitle = strings.TrimSpace(newData.SeoTitle)
+	if changes.SeoTitle != nil {
+		p.SeoTitle = strings.TrimSpace(*changes.SeoTitle)
 	}
-	if newData.SeoDescription != "" {
-		p.SeoDescription = strings.TrimSpace(newData.SeoDescription)
+	if changes.SeoDescription != nil {
+		p.SeoDescription = strings.TrimSpace(*changes.SeoDescription)
 	}
-
-	if newData.CategoryID != nil && *newData.CategoryID > 0 {
-		p.CategoryID = newData.CategoryID
+	if changes.CategoryID != nil {
+		p.CategoryID = changes.CategoryID
 	}
-
-	p.IsActive = newData.IsActive
+	if changes.IsActive != nil {
+		p.IsActive = *changes.IsActive
+	}
 }
 
 type ProductListFilters struct {
@@ -100,6 +110,6 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id int) (*Product, error)
 	GetProductBySlug(ctx context.Context, slug string) (*Product, error)
 	CreateProduct(ctx context.Context, product *Product) error
-	UpdateProduct(ctx context.Context, id int, product *Product) error
+	UpdateProduct(ctx context.Context, id int, changes ProductChanges) error
 	DeleteProduct(ctx context.Context, id int) error
 }
