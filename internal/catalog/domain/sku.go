@@ -7,14 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type Product_skus struct {
+type ProductSKU struct {
 	ID            int                    `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	ProductID     int                    `gorm:"column:product_id;not null;index" json:"product_id"`
 	SkuCode       string                 `gorm:"column:sku_code;unique;not null" json:"sku_code"`
 	BarCode       string                 `gorm:"column:barcode" json:"barcode,omitempty"`
 	PriceCents    int64                  `gorm:"column:price_cents;not null;check:price_cents > 0" json:"price_cents"`
-	Stock         int                    `gorm:"column:stock;not null;default:0;check:stock >= 0" json:"stock"`
-	Attributes    map[string]interface{} `gorm:"type:jsonb" json:"attributes,omitempty"`
+	Attributes    map[string]interface{} `gorm:"column:attributes;type:jsonb;serializer:json" json:"attributes,omitempty"`
 	IsActive      bool                   `gorm:"column:is_active;not null;default:true" json:"is_active"`
 	CreatedAt     time.Time              `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 	UpdatedAt     time.Time              `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
@@ -22,10 +21,12 @@ type Product_skus struct {
 	DeletedReason string                 `gorm:"column:deleted_reason" json:"deleted_reason,omitempty"`
 }
 
+func (ProductSKU) TableName() string { return "product_skus" }
+
 type ProductSkusRepository interface {
-	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]Product_skus, int64, error)
+	List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]ProductSKU, int64, error)
 }
 
 type ProductSkuService interface {
-	ListSkus(ctx context.Context, p Pagination, filters map[string]interface{}) ([]Product_skus, int64, error)
+	ListSkus(ctx context.Context, p Pagination, filters map[string]interface{}) ([]ProductSKU, int64, error)
 }

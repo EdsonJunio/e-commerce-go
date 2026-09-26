@@ -289,6 +289,10 @@ Ambas as interfaces expõem somente listagem paginada. Não existem operações 
 
 O filtro `sku_id` é aplicado a uma coluna `sku_id`, que não existe em `product_skus`; o identificador da tabela é `id`. No caminho HTTP atual, a incompatibilidade de chaves descrita na seção de handlers faz o filtro ser ignorado antes de gerar esse SQL.
 
+#### ECOM-003.1 update — September 25, 2026
+
+The persisted entity is now named `ProductSKU` and explicitly maps to `product_skus`. It no longer declares inventory as a SKU-table column; availability remains separate in `stock`. The `attributes` JSONB column uses GORM's JSON serializer so repository reads decode migrated rows into the existing map representation. A PostgreSQL integration test runs against a database where the real migrations were applied and verifies representative fields, active state, count, descending order, and pagination. The invalid filter contract described above remains unchanged for ECOM-003.2.
+
 ## 8. Paginação e erros do catálogo
 
 ### `domain.Pagination`

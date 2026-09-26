@@ -278,6 +278,8 @@ Current implementation update (ECOM-002.4, September 21, 2026): the existing pro
 
 Current implementation update (ECOM-002.5, September 21, 2026): category updates reject direct and indirect parent cycles. The service walks ancestors using uncached PostgreSQL parent lookups for the domain decision; the repository rechecks the current chain in a serialized transaction before saving. This protects writes through the application repository, while the target database-level cycle constraint remains unimplemented for direct SQL writers.
 
+Current implementation update (ECOM-003.1, September 25, 2026): the SKU persistence entity explicitly maps to `product_skus`, excludes inventory fields owned by the separate `stock` table, and decodes the existing `attributes` JSONB column through GORM's JSON serializer. This aligns the current read path with migration `000002`; availability joins, typed filters, and public visibility policy remain future ECOM-003 units.
+
 Tabelas técnicas: `idempotency_keys`, `outbox_events`, `inbox_messages`, `audit_events`. Tokens de sessão/refresh, se utilizados, exigem tabela com hash, expiração, revogação e rotação; não guardar token bruto.
 
 ```mermaid
