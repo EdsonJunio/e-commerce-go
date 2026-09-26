@@ -379,7 +379,26 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	updatedProduct, _ := h.service.GetProductByID(c.Request.Context(), id)
+	updatedProduct, err := h.service.GetProductByID(c.Request.Context(), id)
+	if err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to read product after update",
+			err,
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
+		return
+	}
 
 	logger.L().Info(
 		"product updated successfully",

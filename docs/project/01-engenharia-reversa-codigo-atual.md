@@ -176,6 +176,10 @@ O serviço impede `ParentID == ID`, mas não detecta ciclos indiretos, como A se
 
 The baseline statement above describes the earlier code. Category updates now walk the proposed parent's ancestor chain through an uncached PostgreSQL parent lookup and reject direct or indirect cycles with `ErrInvalidCategoryReference`. A repeated ancestor or missing ancestor also prevents a write. The repository repeats the cycle check against PostgreSQL inside a transaction while serializing parent assignments with a transaction-scoped advisory lock, so concurrent API updates cannot each accept the other's old hierarchy. Explicit parent clearing remains supported. This guard applies to the application update path; direct SQL changes outside the API are not protected by a database constraint.
 
+#### ECOM-002.6 update — September 25, 2026
+
+The empty-slug path now returns `ErrCategorySlugRequired`. The earlier description-error result above remains a historical baseline observation.
+
 ### `categoryRepository`
 
 Definido em [`internal/catalog/repository/category_repository.go`](../../internal/catalog/repository/category_repository.go), mantém `*gorm.DB` e `*cache.RedisClient`.
@@ -307,6 +311,10 @@ Nem todos são usados ou mapeados corretamente:
 - `ErrParentCategoryRequired` não é usado;
 - erros de descrição e SEO de produto não entram no mapper HTTP e podem virar 500;
 - slug vazio de categoria retorna o erro de descrição.
+
+#### ECOM-002.6 update — September 25, 2026
+
+The two inaccurate unused sentinels were removed. Product description, SEO title, and SEO description validation errors now map to `400 invalid_request`; unknown errors still map to `500 internal_error`. Empty category slugs use the slug-required sentinel.
 
 ## 9. Domínio de identidade e autenticação
 
@@ -473,6 +481,10 @@ Respostas de sucesso não paginadas sempre usam `{"data": ...}`. Os links next/p
 - 500/`internal_error` para os demais.
 
 `HTTPErrorMapping` contém código HTTP, código público e nível de log. `LogByErrorMapping` usa esse nível para registrar o erro com Zap. Apesar de estar em `shared`, o mapper importa diretamente erros do catálogo, criando dependência do compartilhado para um módulo específico.
+
+#### ECOM-002.6 update — September 25, 2026
+
+Category and product update handlers no longer discard errors from the read performed after a successful write. A read failure is logged and translated through the existing mapper; internal details remain redacted for a `500` response. The write has already completed at this point, so the error reports that the updated representation could not be produced rather than implying transaction rollback.
 
 ### Logging HTTP e recovery
 

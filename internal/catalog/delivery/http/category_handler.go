@@ -373,7 +373,26 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	updatedCategory, _ := h.service.GetCategoryByID(c.Request.Context(), id)
+	updatedCategory, err := h.service.GetCategoryByID(c.Request.Context(), id)
+	if err != nil {
+		mapping := transport.HTTPErrorMapper(err)
+
+		transport.LogByErrorMapping(
+			mapping,
+			"failed to read category after update",
+			err,
+			zap.Int("id", id),
+			zap.String("request_id", reqID),
+		)
+
+		msg := err.Error()
+		if mapping.HTTPCode == http.StatusInternalServerError {
+			msg = "internal server error"
+		}
+
+		response.Error(c, mapping.HTTPCode, mapping.Code, msg)
+		return
+	}
 
 	logger.L().Info(
 		"category updated successfully",

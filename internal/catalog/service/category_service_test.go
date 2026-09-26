@@ -38,6 +38,16 @@ func (r *updateCategoryRepository) FindByID(_ context.Context, id int) (*domain.
 	copy := r.category
 	return &copy, nil
 }
+
+func TestGetCategoryBySlugRejectsEmptySlugWithSlugError(t *testing.T) {
+	service := NewCategoryService(&updateCategoryRepository{})
+
+	_, err := service.GetCategoryBySlug(context.Background(), "")
+
+	if !errors.Is(err, domain.ErrCategorySlugRequired) {
+		t.Fatalf("error = %v, want %v", err, domain.ErrCategorySlugRequired)
+	}
+}
 func (r *updateCategoryRepository) FindParentByID(ctx context.Context, id int) (*int, error) {
 	category, err := r.FindByID(ctx, id)
 	if err != nil {

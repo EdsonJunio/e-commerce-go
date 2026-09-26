@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"e-commerce-go/internal/catalog/domain"
 	"e-commerce-go/internal/shared/middleware"
 	"e-commerce-go/internal/shared/response"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +23,8 @@ type productServiceStub struct {
 	updateCalls int
 	changes     domain.ProductChanges
 	updateErr   error
+	getCalls    int
+	getErr      error
 }
 
 func (s *productServiceStub) ListProducts(_ context.Context, p domain.Pagination, filters domain.ProductListFilters) ([]domain.Product, int64, error) {
@@ -29,7 +33,11 @@ func (s *productServiceStub) ListProducts(_ context.Context, p domain.Pagination
 	s.filters = filters
 	return nil, 0, nil
 }
-func (*productServiceStub) GetProductByID(context.Context, int) (*domain.Product, error) {
+func (s *productServiceStub) GetProductByID(context.Context, int) (*domain.Product, error) {
+	s.getCalls++
+	if s.getErr != nil {
+		return nil, s.getErr
+	}
 	return &domain.Product{ID: 1}, nil
 }
 func (*productServiceStub) GetProductBySlug(context.Context, string) (*domain.Product, error) {
@@ -100,6 +108,18 @@ func TestProductHandlerUpdateRejectsMalformedAndMissing(t *testing.T) {
 	result := productUpdateRequest(service, `{}`)
 	if result.Code != http.StatusNotFound || service.updateCalls != 1 {
 		t.Fatalf("status = %d, calls = %d", result.Code, service.updateCalls)
+	}
+}
+
+func TestProductHandlerUpdatePropagatesPostWriteReadFailure(t *testing.T) {
+	service := &productServiceStub{getErr: errors.New("database unavailable")}
+	result := productUpdateRequest(service, `{}`)
+
+	if result.Code != http.StatusInternalServerError || service.updateCalls != 1 || service.getCalls != 1 {
+		t.Fatalf("status = %d, update calls = %d, get calls = %d, body = %s", result.Code, service.updateCalls, service.getCalls, result.Body.String())
+	}
+	if !strings.Contains(result.Body.String(), `"code":"internal_error"`) || strings.Contains(result.Body.String(), "database unavailable") {
+		t.Fatalf("unexpected error response: %s", result.Body.String())
 	}
 }
 
