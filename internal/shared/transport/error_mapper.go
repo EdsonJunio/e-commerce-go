@@ -48,6 +48,9 @@ func HTTPErrorMapper(err error) HTTPErrorMapping {
 
 	// 400 Bad Request Group (Validation)
 	case errors.Is(err, domain.ErrCategoryDescriptionRequired),
+		errors.Is(err, domain.ErrProductDescriptionRequired),
+		errors.Is(err, domain.ErrSeoTitle),
+		errors.Is(err, domain.ErrSeoDescription),
 		errors.Is(err, domain.ErrInvalidProductID),
 		errors.Is(err, domain.ErrInvalidCategoryReference),
 		errors.Is(err, domain.ErrProductSlugRequired),

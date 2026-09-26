@@ -26,7 +26,7 @@ func (s *categoryService) GetCategoryByID(ctx context.Context, id int) (*domain.
 
 func (s *categoryService) GetCategoryBySlug(ctx context.Context, slug string) (*domain.Category, error) {
 	if slug == "" {
-		return nil, domain.ErrCategoryDescriptionRequired
+		return nil, domain.ErrCategorySlugRequired
 	}
 
 	category, err := s.repo.FindBySlug(ctx, slug)

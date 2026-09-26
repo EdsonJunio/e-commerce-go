@@ -24,6 +24,8 @@ type categoryServiceStub struct {
 	changes     domain.CategoryChanges
 	updateCalls int
 	updateErr   error
+	getCalls    int
+	getErr      error
 }
 
 func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domain.Pagination, filters domain.CategoryListFilters) ([]domain.Category, int64, error) {
@@ -33,7 +35,11 @@ func (s *categoryServiceStub) ListCategories(_ context.Context, pagination domai
 	return []domain.Category{{ID: 1, Name: "Electronics", IsActive: true}}, 1, nil
 }
 
-func (*categoryServiceStub) GetCategoryByID(context.Context, int) (*domain.Category, error) {
+func (s *categoryServiceStub) GetCategoryByID(context.Context, int) (*domain.Category, error) {
+	s.getCalls++
+	if s.getErr != nil {
+		return nil, s.getErr
+	}
 	return &domain.Category{ID: 1, Name: "Category", Slug: "category", Description: "Description"}, nil
 }
 
@@ -64,6 +70,24 @@ func TestCategoryHandlerUpdateRejectsHierarchyCycle(t *testing.T) {
 	}
 	if !strings.Contains(result.Body.String(), `"code":"invalid_request"`) {
 		t.Fatalf("unexpected error code: %s", result.Body.String())
+	}
+}
+
+func TestCategoryHandlerUpdatePropagatesPostWriteReadFailure(t *testing.T) {
+	service := &categoryServiceStub{getErr: domain.ErrCategoryNotFound}
+	router := gin.New()
+	router.PUT("/api/v1/categories/:id", NewCategoryHandler(service).UpdateCategory)
+	request := httptest.NewRequest(http.MethodPut, "/api/v1/categories/1", strings.NewReader(`{}`))
+	request.Header.Set("Content-Type", "application/json")
+	result := httptest.NewRecorder()
+
+	router.ServeHTTP(result, request)
+
+	if result.Code != http.StatusNotFound || service.updateCalls != 1 || service.getCalls != 1 {
+		t.Fatalf("status = %d, update calls = %d, get calls = %d, body = %s", result.Code, service.updateCalls, service.getCalls, result.Body.String())
+	}
+	if !strings.Contains(result.Body.String(), `"code":"not_found"`) {
+		t.Fatalf("unexpected error response: %s", result.Body.String())
 	}
 }
 
