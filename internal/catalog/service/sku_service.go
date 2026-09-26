@@ -14,6 +14,6 @@ func NewProductSkuService(
 	return &ProductSkuService{repo: repo}
 }
 
-func (ss *ProductSkuService) ListSkus(ctx context.Context, p domain.Pagination, filters map[string]interface{}) ([]domain.Product_skus, int64, error) {
+func (ss *ProductSkuService) ListSkus(ctx context.Context, p domain.Pagination, filters map[string]interface{}) ([]domain.ProductSKU, int64, error) {
 	return ss.repo.List(ctx, p.Limit, p.Offset, filters)
 }

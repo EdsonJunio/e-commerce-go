@@ -15,11 +15,11 @@ func NewProductSkuRepository(db *gorm.DB) domain.ProductSkusRepository {
 	return &ProductSkuRepository{db: db}
 }
 
-func (sr *ProductSkuRepository) List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]domain.Product_skus, int64, error) {
-	var skus []domain.Product_skus
+func (sr *ProductSkuRepository) List(ctx context.Context, limit, offset int, filters map[string]interface{}) ([]domain.ProductSKU, int64, error) {
+	var skus []domain.ProductSKU
 	var total int64
 
-	tx := sr.db.WithContext(ctx).Model(&domain.Product_skus{})
+	tx := sr.db.WithContext(ctx).Model(&domain.ProductSKU{})
 
 	if skuID, ok := filters["sku_id"]; ok {
 		tx = tx.Where("sku_id = ?", skuID)
