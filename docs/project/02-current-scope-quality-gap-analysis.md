@@ -337,10 +337,6 @@ Completion criteria:
 - All maintained documentation and public code documentation are in English.
 - All internal documentation links resolve.
 
-## 6. Stabilization epics
-
-...conteúdo atual dos épicos...
-
 ## 7. Execution status
 
 | Unit       | Status  | Branch | Evidence              | Updated at |
@@ -351,16 +347,9 @@ Completion criteria:
 | ECOM-002.4 | done | `fix/ecom-002-4-product-partial-update` | Implemented in commit `a8c4f83b99bc086a1edf7347981fe822c0261f99`; approved by independent review; pushed and merged by PR #52 in merge commit `7addec68070751448824113253502249e91c175c`. Pre-correction failure and domain/service/HTTP tests; format, vet, unit, race, and build passed. PostgreSQL integration and OpenAPI remained blocked; lint/security tools were unavailable. | 2026-09-21 |
 | ECOM-002.5 | done | `fix/ecom-002-5-category-hierarchy-cycles` | Implemented in commit `6a73b12`; independent review approved; PostgreSQL cycle and concurrency tests ran without skips; merged by PR #54 in merge commit `329ab01`. OpenAPI drift was blocked; lint, secret, and vulnerability tools were unavailable, and those limitations were explicitly accepted for this unit. | 2026-09-25 |
 | ECOM-002.6 | done | `fix/ecom-002-6-catalog-error-propagation` | Independent review approved with no findings after reproducing pre-correction failures and confirming all acceptance criteria. Focused, full, race, vet, build, formatting, coverage, and diff checks passed. Lint and OpenAPI remained blocked by documented pre-existing limitations; security scanners were unavailable. | 2026-09-25 |
+| ECOM-003.1 | ready | `fix/ecom-003-1-sku-schema-mapping` | Prior units are complete; the current `Product_skus` model still relies on implicit GORM table naming, maps a nonexistent `stock` column, and has no PostgreSQL mapping test. | 2026-09-25 |
 
 ## 8. Execution order
-
-...conteúdo atual da seção Execution order...
-
-## 9. Definition of Done
-
-...conteúdo atual da seção Definition of Done...
-
-## 7. Execution order
 
 ```text
 ECOM-002.1 -> ECOM-002.6
@@ -375,7 +364,7 @@ ECOM-002.1 -> ECOM-002.6
 
 Tests and documentation are part of every subtask. ECOM-005 and ECOM-009 are consolidation gates, not permission to postpone all tests or all documentation until the end.
 
-## 8. Definition of Done
+## 9. Definition of Done
 
 Every subtask must provide:
 
